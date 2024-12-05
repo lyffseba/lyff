@@ -30,6 +30,12 @@
             filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8))
                    drop-shadow(0 0 20px rgba(255, 255, 255, 0.6))
                    drop-shadow(0 0 30px rgba(255, 255, 255, 0.4));
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .meme-container a:hover img {
+            transform: scale(1.05);
         }
         .back-button {
             display: inline-block;
@@ -67,7 +73,9 @@
 <body>
     <div class="container">
         <div class="meme-container">
-            <img src="images/mascot.png" alt="LYFF Meme">
+            <a href="https://www.youtube.com/watch?v=d33C8IE7WnQ&t=213" target="_blank">
+                <img src="images/mascot.png" alt="LYFF Meme">
+            </a>
         </div>
         <a href="index.html" class="back-button">Back to Home</a>
     </div>
