@@ -46,7 +46,7 @@
             cursor: pointer;
         }
         
-        .meme-container a:hover img {
+        .meme-container img:hover {
             transform: scale(1.05);
         }
         .back-button {
@@ -86,11 +86,21 @@
     <div class="container">
         <h1 class="title">LOVE YOURSELF AND FACE FEAR</h1>
         <div class="meme-container">
-            <a href="https://www.youtube.com/watch?v=d33C8IE7WnQ&t=213" target="_blank">
-                <img src="images/mascot.png" alt="LYFF Meme">
-            </a>
+            <img src="images/mascot.png" alt="LYFF Meme" onclick="randomRedirect()">
         </div>
         <a href="index.html" class="back-button">Back to Home</a>
     </div>
+
+    <script>
+        function randomRedirect() {
+            const links = [
+                'https://www.youtube.com/watch?v=d33C8IE7WnQ&t=213',  // Music
+                'https://www.youtube.com/watch?v=aRkPoF7iVGc',        // Movies
+                'https://archive.org/details/dli.ernet.240835/page/5/mode/2up'  // Books
+            ];
+            const randomLink = links[Math.floor(Math.random() * links.length)];
+            window.open(randomLink, '_blank');
+        }
+    </script>
 </body>
 </html>
