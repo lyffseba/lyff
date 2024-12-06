@@ -35,6 +35,24 @@
                 const musicLinksDiv = document.getElementById('music-links');
                 musicLinksDiv.innerHTML = '';
                 
+                if (!response.ok || !data || data.error) {
+                    const linkElement = document.createElement('a');
+                    linkElement.href = 'https://www.youtube.com/watch?v=uFiR3nVtYKY&t=1388s';
+                    linkElement.target = '_blank';
+                    linkElement.className = 'music-link';
+                    linkElement.innerHTML = `
+                        <div class="music-info">
+                            <span class="song-title">Recommended Video</span>
+                            <span class="artist-name">Click to watch</span>
+                        </div>
+                        <button class="play-button">
+                            <span class="play-icon">▶</span>
+                        </button>
+                    `;
+                    musicLinksDiv.appendChild(linkElement);
+                    return;
+                }
+                
                 data.forEach(link => {
                     const linkElement = document.createElement('a');
                     linkElement.href = link.url;
@@ -52,9 +70,22 @@
                     musicLinksDiv.appendChild(linkElement);
                 });
             } catch (error) {
-                console.error('Error fetching music links:', error);
-                document.getElementById('music-links').innerHTML = 
-                    '<p class="error">Could not load recommendations right now.</p>';
+                const musicLinksDiv = document.getElementById('music-links');
+                musicLinksDiv.innerHTML = '';
+                const linkElement = document.createElement('a');
+                linkElement.href = 'https://www.youtube.com/watch?v=uFiR3nVtYKY&t=1388s';
+                linkElement.target = '_blank';
+                linkElement.className = 'music-link';
+                linkElement.innerHTML = `
+                    <div class="music-info">
+                        <span class="song-title">Recommended Video</span>
+                        <span class="artist-name">Click to watch</span>
+                    </div>
+                    <button class="play-button">
+                        <span class="play-icon">▶</span>
+                    </button>
+                `;
+                musicLinksDiv.appendChild(linkElement);
             }
         }
 

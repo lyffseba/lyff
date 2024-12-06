@@ -32,7 +32,11 @@ def get_music_links():
     channel = bot.get_channel(int(MUSIC_CHANNEL_ID))
     if not channel:
         print("Channel not found!")
-        return jsonify({'error': 'Channel not found'}), 404
+        return jsonify([{
+            'url': 'https://www.youtube.com/watch?v=uFiR3nVtYKY&t=1388s',
+            'song': 'Recommended Video',
+            'artist': 'Click to watch'
+        }])
     
     music_links = []
     print(f"Found channel: {channel.name}")
@@ -75,7 +79,11 @@ def get_music_links():
     
     print(f"Found {len(music_links)} music links")
     if not music_links:
-        return jsonify({'error': 'No music links found'}), 404
+        return jsonify([{
+            'url': 'https://www.youtube.com/watch?v=uFiR3nVtYKY&t=1388s',
+            'song': 'Recommended Video',
+            'artist': 'Click to watch'
+        }])
         
     import random
     selected_links = random.sample(music_links, min(3, len(music_links)))
