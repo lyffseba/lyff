@@ -3,7 +3,7 @@ import json
 import os
 import re
 from discord.ext import commands
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -16,6 +16,15 @@ CORS(app)
 # Get values from environment variables
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 MUSIC_CHANNEL_ID = os.getenv('MUSIC_CHANNEL_ID')
+
+# Serve static files
+@app.route('/')
+def serve_index():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('.', path)
 
 # Set up intents
 intents = discord.Intents.default()
