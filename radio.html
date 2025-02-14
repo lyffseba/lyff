@@ -21,6 +21,7 @@
 
             <div class="cta-buttons">
                 <a href="index.html" class="cta-button outline">Back to Home</a>
+                <button onclick="playNextVideo()" class="cta-button">Next Song</button>
             </div>
         </div>
     </div>
@@ -57,10 +58,28 @@
             }
         }
 
-        function playNextVideo() {
-            currentIndex = (currentIndex + 1) % currentPlaylist.length;
-            const nextVideo = getVideoId(currentPlaylist[currentIndex].url);
-            player.loadVideoById(nextVideo);
+        async function playNextVideo() {
+            // Fetch new songs if we're at the end of the playlist
+            if (currentIndex >= currentPlaylist.length - 1) {
+                await fetchMusicLinks();
+                currentIndex = 0;
+            } else {
+                currentIndex = (currentIndex + 1) % currentPlaylist.length;
+            }
+            
+            if (currentPlaylist.length > 0) {
+                const nextVideo = getVideoId(currentPlaylist[currentIndex].url);
+                player.loadVideoById(nextVideo);
+                
+                // Highlight the current playing song in the list
+                document.querySelectorAll('.music-link').forEach((link, index) => {
+                    if (index === currentIndex) {
+                        link.classList.add('playing');
+                    } else {
+                        link.classList.remove('playing');
+                    }
+                });
+            }
         }
 
         function getVideoId(url) {
@@ -74,9 +93,19 @@
         async function fetchMusicLinks() {
             try {
                 const response = await fetch('http://localhost:5001/get-music-links');
-                const data = await response.json();
-                
                 const musicLinksDiv = document.getElementById('music-links');
+                
+                if (!response.ok) {
+                    musicLinksDiv.innerHTML = `
+                        <div class="error-message">
+                            <p>No music found in Discord channel.</p>
+                            <p>Share some YouTube links in the Discord channel first!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const data = await response.json();
                 musicLinksDiv.innerHTML = '';
                 
                 if (data && data.length > 0) {
@@ -106,6 +135,13 @@
                     });
                 }
             } catch (error) {
+                const musicLinksDiv = document.getElementById('music-links');
+                musicLinksDiv.innerHTML = `
+                    <div class="error-message">
+                        <p>Error connecting to server.</p>
+                        <p>Please try again later.</p>
+                    </div>
+                `;
                 console.error('Error:', error);
             }
         }

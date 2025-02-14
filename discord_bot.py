@@ -52,9 +52,10 @@ def get_music_links():
     if not channel:
         print("Channel not found!")
         return jsonify([{
-            'url': 'https://www.youtube.com/watch?v=uFiR3nVtYKY&t=1388s',
-            'song': 'Recommended Video',
-            'artist': 'Click to watch'
+            'url': 'https://www.youtube.com/watch?v=qEsWePrJZsY&t=467',
+            'song': 'LYFF Radio',
+            'artist': 'Essential',
+            'timestamp': '2022-01-01T00:00:00'
         }])
     
     music_links = []
@@ -66,7 +67,8 @@ def get_music_links():
     async def fetch_messages():
         print("Fetching messages...")
         try:
-            async for message in channel.history(limit=50):  # Increased limit to get more songs
+            # Increased limit to get more variety
+            async for message in channel.history(limit=100):
                 messages.append(message)
             print(f"Found {len(messages)} messages")
         except Exception as e:
@@ -76,31 +78,38 @@ def get_music_links():
     asyncio.set_event_loop(loop)
     loop.run_until_complete(fetch_messages())
     
+    # Process messages to extract YouTube links
+    seen_urls = set()  # To avoid duplicate songs
     for message in messages:
         content = message.content
         urls = re.findall(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s]+)', content)
         if urls:
-            url = urls[0]
-            music_info = parse_music_info(content, url)
-            music_links.append({
-                'url': url,
-                'song': music_info['song'],
-                'artist': music_info['artist'],
-                'timestamp': message.created_at.isoformat()
-            })
+            url = urls[0].split('&')[0]  # Remove extra parameters from URL
+            if url not in seen_urls:  # Only add if we haven't seen this URL
+                seen_urls.add(url)
+                music_info = parse_music_info(content, url)
+                music_links.append({
+                    'url': url,
+                    'song': music_info['song'],
+                    'artist': music_info['artist'],
+                    'timestamp': message.created_at.isoformat()
+                })
     
     if not music_links:
         return jsonify([{
-            'url': 'https://www.youtube.com/watch?v=uFiR3nVtYKY&t=1388s',
-            'song': 'Recommended Video',
-            'artist': 'Click to watch'
+            'url': 'https://www.youtube.com/watch?v=qEsWePrJZsY&t=467',
+            'song': 'LYFF Radio',
+            'artist': 'Essential',
+            'timestamp': '2022-01-01T00:00:00'
         }])
-        
-    # Sort by timestamp and select random recent songs
+    
+    # Sort by timestamp and select random songs
     music_links.sort(key=lambda x: x['timestamp'], reverse=True)
-    recent_links = music_links[:20]  # Get 20 most recent songs
+    # Get more songs for better variety
+    recent_links = music_links[:50]  # Get 50 most recent songs
     import random
-    selected_links = random.sample(recent_links, min(3, len(recent_links)))
+    # Select more songs for the playlist
+    selected_links = random.sample(recent_links, min(5, len(recent_links)))
     return jsonify(selected_links)
 
 @bot.event

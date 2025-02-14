@@ -181,6 +181,38 @@ body {
     color: #ff6b6b;
 }
 
+.next-button {
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    background: #ff4d4d;
+    color: white;
+}
+
+.next-button.outline {
+    background: transparent;
+    border: 2px solid #ff4d4d;
+    color: #ff4d4d;
+}
+
+.next-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 77, 77, 0.3);
+}
+
+.music-link.playing {
+    background: rgba(255, 77, 77, 0.1);
+    border-left: 4px solid #ff4d4d;
+}
+
+.music-link.playing .song-title {
+    color: #ff4d4d;
+}
+
 @keyframes glow {
     from {
         text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
