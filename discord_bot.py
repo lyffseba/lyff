@@ -17,7 +17,12 @@ CORS(app)
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 MUSIC_CHANNEL_ID = os.getenv('MUSIC_CHANNEL_ID')
 
-bot = commands.Bot(command_prefix='!', intents=discord.Intents.default())
+# Set up intents
+intents = discord.Intents.default()
+intents.message_content = True
+intents.messages = True
+
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 def parse_music_info(content):
     """Extract song name and artist from message content"""
