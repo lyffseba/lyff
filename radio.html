@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LYFF Radio</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <h1 class="glow-text">LYFF Radio</h1>
+            <p class="subtitle">Today's Vibes</p>
+            
+            <div class="music-section">
+                <div id="player"></div>
+                <div id="music-links" class="music-links">
+                    <p class="loading">Finding some beats for you...</p>
+                </div>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="index.html" class="cta-button outline">Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        let player;
+        let currentPlaylist = [];
+        let currentIndex = 0;
+
+        function onYouTubeIframeAPIReady() {
+            // Player will be initialized when we get the music links
+        }
+
+        function initializePlayer(videoId) {
+            player = new YT.Player('player', {
+                height: '360',
+                width: '640',
+                videoId: videoId,
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            event.target.playVideo();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.ENDED) {
+                playNextVideo();
+            }
+        }
+
+        function playNextVideo() {
+            currentIndex = (currentIndex + 1) % currentPlaylist.length;
+            const nextVideo = getVideoId(currentPlaylist[currentIndex].url);
+            player.loadVideoById(nextVideo);
+        }
+
+        function getVideoId(url) {
+            const urlObj = new URL(url);
+            if (url.includes('youtu.be')) {
+                return url.split('/').pop().split('?')[0];
+            }
+            return urlObj.searchParams.get('v');
+        }
+
+        async function fetchMusicLinks() {
+            try {
+                const response = await fetch('http://localhost:5001/get-music-links');
+                const data = await response.json();
+                
+                const musicLinksDiv = document.getElementById('music-links');
+                musicLinksDiv.innerHTML = '';
+                
+                if (data && data.length > 0) {
+                    currentPlaylist = data;
+                    currentIndex = 0;
+                    
+                    // Initialize player with first video
+                    const firstVideoId = getVideoId(data[0].url);
+                    if (!player) {
+                        initializePlayer(firstVideoId);
+                    }
+
+                    // Display playlist
+                    data.forEach((item, index) => {
+                        const linkElement = document.createElement('div');
+                        linkElement.className = 'music-link';
+                        linkElement.innerHTML = `
+                            <div class="music-info">
+                                <span class="song-title">${item.song}</span>
+                                <span class="artist-name">${item.artist}</span>
+                            </div>
+                            <button class="play-button" onclick="playVideo(${index})">
+                                <span class="play-icon">▶</span>
+                            </button>
+                        `;
+                        musicLinksDiv.appendChild(linkElement);
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function playVideo(index) {
+            currentIndex = index;
+            const videoId = getVideoId(currentPlaylist[index].url);
+            player.loadVideoById(videoId);
+        }
+
+        // Fetch music links when page loads
+        fetchMusicLinks();
+    </script>
+</body>
+</html>
