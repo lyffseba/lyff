@@ -24,12 +24,17 @@ intents.messages = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-def parse_music_info(content):
-    """Extract song name and artist from message content"""
+def parse_music_info(content, url):
+    """Extract song name and artist from message content or YouTube URL"""
+    # Remove the URL from the content
+    content = content.replace(url, '').strip()
+    
     if ' - ' in content:
         parts = content.split(' - ', 1)
         return {'artist': parts[0].strip(), 'song': parts[1].strip()}
-    return {'artist': 'Unknown', 'song': content.strip()}
+    
+    # If no artist-song format, use the whole content as song name
+    return {'artist': 'From Discord', 'song': content if content else 'Music Share'}
 
 @app.route('/get-music-links')
 def get_music_links():
@@ -46,43 +51,35 @@ def get_music_links():
     music_links = []
     print(f"Found channel: {channel.name}")
     
-    # Create a list to store messages
     messages = []
-    
-    # Use asyncio to run the async code
     import asyncio
     
     async def fetch_messages():
         print("Fetching messages...")
         try:
-            async for message in channel.history(limit=10):
+            async for message in channel.history(limit=50):  # Increased limit to get more songs
                 messages.append(message)
             print(f"Found {len(messages)} messages")
         except Exception as e:
             print(f"Error fetching messages: {e}")
     
-    # Run the async code
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(fetch_messages())
     
-    # Process the messages
     for message in messages:
-        content = message.content.lower()
-        if 'youtube.com' in content or 'youtu.be' in content:
-            urls = re.findall(r'(https?://[^\s]+)', message.content)
-            if urls:
-                url = urls[0]
-                music_info = parse_music_info(message.content.replace(url, ''))
-                music_links.append({
-                    'url': url,
-                    'song': music_info['song'],
-                    'artist': music_info['artist'],
-                    'shared_by': str(message.author),
-                    'timestamp': message.created_at.isoformat()
-                })
+        content = message.content
+        urls = re.findall(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s]+)', content)
+        if urls:
+            url = urls[0]
+            music_info = parse_music_info(content, url)
+            music_links.append({
+                'url': url,
+                'song': music_info['song'],
+                'artist': music_info['artist'],
+                'timestamp': message.created_at.isoformat()
+            })
     
-    print(f"Found {len(music_links)} music links")
     if not music_links:
         return jsonify([{
             'url': 'https://www.youtube.com/watch?v=uFiR3nVtYKY&t=1388s',
@@ -90,8 +87,11 @@ def get_music_links():
             'artist': 'Click to watch'
         }])
         
+    # Sort by timestamp and select random recent songs
+    music_links.sort(key=lambda x: x['timestamp'], reverse=True)
+    recent_links = music_links[:20]  # Get 20 most recent songs
     import random
-    selected_links = random.sample(music_links, min(3, len(music_links)))
+    selected_links = random.sample(recent_links, min(3, len(recent_links)))
     return jsonify(selected_links)
 
 @bot.event
