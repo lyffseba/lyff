@@ -140,7 +140,7 @@
                         const linkElement = document.createElement('div');
                         linkElement.className = 'music-link';
                         linkElement.innerHTML = `
-                            <div class="music-info">
+                            <div class="music-info" onclick="playVideo(${index})" style="cursor: pointer;">
                                 <span class="song-title">${item.song}</span>
                                 <span class="artist-name">${item.artist}</span>
                             </div>
