@@ -165,5 +165,5 @@ if __name__ == '__main__':
     bot_thread = threading.Thread(target=bot.run, args=(DISCORD_TOKEN,))
     bot_thread.start()
     
-    # Run Flask on a different port
-    app.run(port=5001, debug=True)
+    # Run Flask on the same port as the bot
+    app.run(host='0.0.0.0', port=os.getenv('PORT', 5001), debug=True)
