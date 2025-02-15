@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div class="fixed-buttons">
+        <a href="index.html" class="fixed-button home-button">
+            <span class="button-text">LYFF</span>
+        </a>
+        <button class="fixed-button mute-button" onclick="toggleMute()">
+            <span class="button-text" id="mute-text">MUTE</span>
+        </button>
+    </div>
     <div class="container">
         <div class="content">
             <h1 class="glow-text">LYFF Radio</h1>
@@ -185,6 +193,16 @@
                     link.classList.remove('playing');
                 }
             });
+        }
+
+        function toggleMute() {
+            if (player.isMuted()) {
+                player.unMute();
+                document.getElementById('mute-text').textContent = 'MUTE';
+            } else {
+                player.mute();
+                document.getElementById('mute-text').textContent = 'UNMUTE';
+            }
         }
 
         // Fetch music links when page loads
