@@ -121,6 +121,7 @@ Usage:
   lyff run <id> <cmd>      Named command from registry
   lyff run <id> -- <sh>    Arbitrary shell in project dir
   lyff foreach <sh…>       Run shell in every project
+  lyff bundle [out.tgz]    Offline tarball of hub + projects (airplane)
   lyff registry            Show registry path
   lyff root                Show hub root
   lyff help                This help
@@ -321,6 +322,89 @@ def cmd_foreach(reg: dict, rest: list[str]) -> None:
         subprocess.call(["bash", "-lc", shell_cmd], cwd=path)
 
 
+# Paths excluded from airplane bundles (regenerable / huge / secrets)
+_BUNDLE_EXCLUDE_DIR_NAMES = {
+    "node_modules",
+    ".pixi",
+    ".venv",
+    "venv",
+    "target",
+    "dist",
+    "build",
+    ".next",
+    ".turbo",
+    "__pycache__",
+    ".pytest_cache",
+    ".lyff",
+    ".git",  # nested project objects still needed for offline git — we INCLUDE .git
+}
+# Actually keep nested .git for offline commits; only exclude hub cache
+_BUNDLE_EXCLUDE_DIR_NAMES.discard(".git")
+
+_BUNDLE_EXCLUDE_GLOBS = (
+    ".env",
+    ".env.local",
+    "*.db",
+    "*.log",
+    ".DS_Store",
+)
+
+
+def cmd_bundle(out_arg: str | None) -> None:
+    """Create an offline tarball of the whole lyff tree (no network)."""
+    import tarfile
+    import time
+
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    out = Path(out_arg) if out_arg else LYFF_ROOT / f"lyff-offline-{stamp}.tar.gz"
+    if not out.is_absolute():
+        out = Path.cwd() / out
+
+    def should_skip(path: Path) -> bool:
+        parts = set(path.parts)
+        if parts & _BUNDLE_EXCLUDE_DIR_NAMES:
+            # allow if only the name appears as a file? skip dir components
+            for part in path.parts:
+                if part in _BUNDLE_EXCLUDE_DIR_NAMES:
+                    return True
+        name = path.name
+        if name in (".env", ".env.local") or name.endswith(".db"):
+            return True
+        if name == ".DS_Store" or name.endswith(".log"):
+            return True
+        return False
+
+    print(f"bundling {LYFF_ROOT} → {out}")
+    count = 0
+    with tarfile.open(out, "w:gz") as tar:
+        for dirpath, dirnames, filenames in os.walk(LYFF_ROOT):
+            # prune heavy dirs in-place
+            dirnames[:] = [
+                d
+                for d in dirnames
+                if d not in _BUNDLE_EXCLUDE_DIR_NAMES
+                and d != ".lyff"
+            ]
+            # always keep .git directories for offline work
+            rel_base = Path(dirpath).relative_to(LYFF_ROOT)
+            for fn in filenames:
+                fp = Path(dirpath) / fn
+                if should_skip(fp):
+                    continue
+                # skip the bundle output if writing inside tree
+                try:
+                    if fp.resolve() == out.resolve():
+                        continue
+                except Exception:
+                    pass
+                arc = Path("lyff") / rel_base / fn
+                tar.add(fp, arcname=str(arc), recursive=False)
+                count += 1
+    size_mb = out.stat().st_size / (1024 * 1024)
+    print(f"done: {count} files, {size_mb:.1f} MiB → {out}")
+    print("extract: tar -xzf", out.name, "&& cd lyff && ./bin/lyff status")
+
+
 def main() -> None:
     reg = load_registry()
     cache_registry(reg)
@@ -350,6 +434,8 @@ def main() -> None:
         cmd_run(reg, args[1], args[2:])
     elif cmd == "foreach":
         cmd_foreach(reg, args[1:])
+    elif cmd == "bundle":
+        cmd_bundle(args[1] if len(args) > 1 else None)
     elif cmd == "registry":
         print(REGISTRY)
     elif cmd == "root":

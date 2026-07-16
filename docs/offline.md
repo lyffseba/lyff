@@ -44,6 +44,18 @@ lyff run witness -- go mod download
 
 Then disconnect. Use `lyff status` and local builds only.
 
+## One-shot offline archive
+
+```bash
+cd ~/lyff
+lyff bundle                          # → lyff-offline-YYYYMMDD-HHMMSS.tar.gz
+lyff bundle /media/usb/lyff.tgz      # custom path
+# later, offline machine:
+tar -xzf lyff-offline-….tar.gz && cd lyff && ./bin/lyff status
+```
+
+Bundle includes nested `.git` histories and source; excludes `node_modules`, `.pixi`, `.venv`, `target`, `.env`, `*.db`.
+
 ## Hub git model
 
 - **Hub repo** tracks docs + `bin/lyff` + registry (this offline brain).

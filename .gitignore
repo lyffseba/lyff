@@ -48,3 +48,5 @@
 # Local hub state
 .lyff/
 *.log
+lyff-offline-*.tar.gz
+*.tgz

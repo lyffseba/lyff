@@ -46,6 +46,7 @@ Without install:
 | `lyff run bet build` | Registry command in a project |
 | `lyff run maxi test` | e.g. `pixi run test` |
 | `lyff foreach 'git status -sb'` | Same shell snippet in each repo |
+| `lyff bundle` | Airplane tarball of hub + projects |
 
 ## Documentation
 

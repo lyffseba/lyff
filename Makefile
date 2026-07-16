@@ -1,5 +1,5 @@
 # lyff hub — offline orchestration
-.PHONY: help status doctor list docs install uninstall test-cli
+.PHONY: help status doctor list docs install uninstall test-cli bundle
 
 LYFF := ./bin/lyff
 
@@ -10,6 +10,7 @@ help:
 	@echo "  make doctor    toolchain + paths"
 	@echo "  make list      registry table"
 	@echo "  make docs      print docs index"
+	@echo "  make bundle    airplane tarball"
 	@echo "  make test-cli  smoke the CLI"
 
 status:
@@ -35,6 +36,9 @@ install:
 uninstall:
 	rm -f "$(HOME)/.local/bin/lyff"
 	@echo "Removed ~/.local/bin/lyff"
+
+bundle:
+	$(LYFF) bundle
 
 test-cli:
 	$(LYFF) help >/dev/null

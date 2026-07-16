@@ -28,7 +28,7 @@
 
 1. Keep registry.yaml in sync when adding/removing projects.
 2. Prefer `lyff status` / `lyff doctor` before network operations.
-3. Optional: `lyff bundle` for airplane tarballs.
+3. `lyff bundle` for airplane tarballs; hub remote `lyffseba/lyff` when online.
 
 ---
 *Agents: read this file and `docs/index.md` first when working in the lyff workspace.*

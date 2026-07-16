@@ -17,6 +17,7 @@ Installed from `bin/lyff` to `~/.local/bin/lyff` via `make install`.
 | `lyff foreach <git-or-shell…>` | Run in every project (`status`, `fetch` not default) |
 | `lyff open <id>` | `cd` helper (prints path; use `cd $(lyff path <id>)`) |
 | `lyff path <id>` | Print absolute path |
+| `lyff bundle [out.tgz]` | Airplane tarball (excludes `node_modules`, `.pixi`, `.venv`, secrets) |
 | `lyff registry` | Print `registry.yaml` path / validate |
 
 ## Makefile
