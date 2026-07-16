@@ -95,9 +95,14 @@ def git(cwd: Path, *args: str) -> str:
         return ""
 
 
+def _sid(v) -> str:
+    """Coerce registry ids/paths to str (YAML may parse 43 as int)."""
+    return str(v) if v is not None else ""
+
+
 def project_by_id(reg: dict, pid: str) -> dict | None:
     for p in reg.get("projects") or []:
-        if p.get("id") == pid:
+        if _sid(p.get("id")) == str(pid):
             return p
     return None
 
@@ -131,7 +136,7 @@ def cmd_list(reg: dict) -> None:
     print("-" * 72)
     for p in reg.get("projects") or []:
         print(
-            f"{p.get('id', ''):12} {str(p.get('status', '')):12} "
+            f"{_sid(p.get('id')):12} {str(p.get('status', '')):12} "
             f"{str(p.get('role', '')):10} {str(p.get('offline_ok', '')):10} "
             f"{p.get('name', '')}"
         )
@@ -144,10 +149,11 @@ def cmd_status(reg: dict) -> None:
     print(f"{'ID':12} {'BRANCH':12} {'DIRTY':6} {'OFFLINE':10} HEAD")
     print("-" * 90)
     for p in reg.get("projects") or []:
-        path = LYFF_ROOT / p.get("path", p["id"])
+        pid = _sid(p.get("id"))
+        path = LYFF_ROOT / _sid(p.get("path", pid))
         if not path.is_dir():
             print(
-                f"{p['id']:12} {'—':12} {'MISS':6} "
+                f"{pid:12} {'—':12} {'MISS':6} "
                 f"{str(p.get('offline_ok', '')):10} (missing directory)"
             )
             continue
@@ -158,7 +164,7 @@ def cmd_status(reg: dict) -> None:
         if len(head) > 52:
             head = head[:49] + "..."
         print(
-            f"{p['id']:12} {branch:12} {dirty:6} "
+            f"{pid:12} {branch:12} {dirty:6} "
             f"{str(p.get('offline_ok', '')):10} {head}"
         )
 
@@ -196,14 +202,15 @@ def cmd_doctor(reg: dict) -> int:
 
     print("\nProjects")
     for p in reg.get("projects") or []:
-        path = LYFF_ROOT / p.get("path", p["id"])
+        pid = _sid(p.get("id"))
+        path = LYFF_ROOT / _sid(p.get("path", pid))
         ok = path.is_dir() and (path / ".git").exists()
-        check(p["id"], ok, str(path) if ok else f"missing {path}")
+        check(pid, ok, str(path) if ok else f"missing {path}")
         if ok:
             dirty = git(path, "status", "--porcelain")
             if dirty:
                 check(
-                    f"{p['id']} clean",
+                    f"{pid} clean",
                     False,
                     f"{len(dirty.splitlines())} dirty paths",
                 )
@@ -226,11 +233,12 @@ def cmd_info(reg: dict, pid: str) -> None:
     if not p:
         print(f"unknown project: {pid}", file=sys.stderr)
         sys.exit(1)
-    path = LYFF_ROOT / p.get("path", pid)
+    path = LYFF_ROOT / _sid(p.get("path", pid))
+    payload = {**p, "id": _sid(p.get("id")), "path": _sid(p.get("path", pid))}
     print(
         json.dumps(
             {
-                **p,
+                **payload,
                 "abs_path": str(path),
                 "branch": git(path, "rev-parse", "--abbrev-ref", "HEAD")
                 if path.is_dir()
@@ -252,7 +260,7 @@ def cmd_path(reg: dict, pid: str) -> None:
     if not p:
         print(f"unknown project: {pid}", file=sys.stderr)
         sys.exit(1)
-    print(LYFF_ROOT / p.get("path", pid))
+    print(LYFF_ROOT / _sid(p.get("path", pid)))
 
 
 def cmd_docs(topic: str | None) -> None:
@@ -275,7 +283,7 @@ def cmd_run(reg: dict, pid: str, rest: list[str]) -> None:
     if not p:
         print(f"unknown project: {pid}", file=sys.stderr)
         sys.exit(1)
-    path = LYFF_ROOT / p.get("path", pid)
+    path = LYFF_ROOT / _sid(p.get("path", pid))
     if not path.is_dir():
         print(f"missing directory: {path}", file=sys.stderr)
         sys.exit(1)
@@ -304,11 +312,12 @@ def cmd_foreach(reg: dict, rest: list[str]) -> None:
         sys.exit(2)
     shell_cmd = " ".join(rest)
     for p in reg.get("projects") or []:
-        path = LYFF_ROOT / p.get("path", p["id"])
+        pid = _sid(p.get("id"))
+        path = LYFF_ROOT / _sid(p.get("path", pid))
         if not path.is_dir():
-            print(f"## {p['id']} (missing)")
+            print(f"## {pid} (missing)")
             continue
-        print(f"## {p['id']}")
+        print(f"## {pid}")
         subprocess.call(["bash", "-lc", shell_cmd], cwd=path)
 
 

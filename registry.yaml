@@ -6,9 +6,9 @@ motto: "First do it, then do it right, then do it better."
 offline: true
 
 projects:
-  - id: 43
+  - id: "43"
     name: "42 Projects Store"
-    path: 43
+    path: "43"
     role: school
     stack: [c]
     status: active
@@ -17,9 +17,9 @@ projects:
       test: "make -C libft bonus"
       docs: "libft/Subject.pdf"
 
-  - id: 44
+  - id: "44"
     name: "Piscine World"
-    path: 44
+    path: "44"
     role: product
     stack: [node, three]
     status: active
