@@ -2,6 +2,8 @@
 
 **Offline portfolio hub** — documentation and orchestration center for everything under this directory.
 
+**Remote:** [github.com/lyffseba/lyff](https://github.com/lyffseba/lyff) (public hub meta-repo; nested products keep their own remotes)
+
 ```text
 ~/lyff          ← you are here (hub)
   docs/         ← portfolio docs
