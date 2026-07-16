@@ -41,14 +41,13 @@ Without install:
 
 | Command | What it does |
 |---------|----------------|
-| `lyff status` | Branch / dirty / head for every project |
-| `lyff doctor` | Toolchains + missing paths |
-| `lyff list` | Registry summary |
+| `lyff status` / `summary` | Status table or one-screen dashboard |
+| `lyff doctor` / `prep` | Healthcheck / offline dep checklist |
+| `lyff list` | Registry summary (`--json` for agents) |
 | `lyff docs offline` | Airplane-mode guide |
 | `lyff run bet build` | Registry command in a project |
-| `lyff run maxi test` | e.g. `pixi run test` |
-| `lyff foreach 'git status -sb'` | Same shell snippet in each repo |
-| `lyff bundle` | Airplane tarball of hub + projects |
+| `lyff bundle` | Airplane tarball (+ `MANIFEST.json`) |
+| `lyff completion bash` | Shell completion (also `share/lyff.sh`) |
 
 ## Documentation
 

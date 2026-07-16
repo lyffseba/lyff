@@ -14,9 +14,9 @@ from typing import Any
 LYFF_ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_PATH = LYFF_ROOT / "registry.yaml"
 DOCS_DIR = LYFF_ROOT / "docs"
-VERSION = "0.2.0"
+SHARE_DIR = LYFF_ROOT / "share"
+VERSION = "0.3.0"
 
-# Directory names pruned when walking for airplane bundles (regenerable / huge).
 BUNDLE_EXCLUDE_DIRS = frozenset(
     {
         "node_modules",
@@ -37,10 +37,28 @@ BUNDLE_EXCLUDE_DIRS = frozenset(
         ".coverage",
     }
 )
-# Nested project .git is KEEP (offline history). Hub-only caches excluded above.
-
 BUNDLE_EXCLUDE_FILE_NAMES = frozenset({".env", ".env.local", ".DS_Store"})
 BUNDLE_EXCLUDE_SUFFIXES = (".db", ".log", ".pyc", ".tar.gz", ".tgz")
+
+# ANSI (only when stdout is a TTY and NO_COLOR unset)
+_USE_COLOR: bool | None = None
+
+
+def use_color() -> bool:
+    global _USE_COLOR
+    if _USE_COLOR is None:
+        _USE_COLOR = (
+            sys.stdout.isatty()
+            and not os.environ.get("NO_COLOR")
+            and os.environ.get("TERM", "") != "dumb"
+        )
+    return _USE_COLOR
+
+
+def c(code: str, text: str) -> str:
+    if not use_color():
+        return text
+    return f"\033[{code}m{text}\033[0m"
 
 
 def _sid(v: Any) -> str:
@@ -64,7 +82,6 @@ def load_raw_registry() -> dict:
 
 
 def _minimal_parse(text: str) -> dict:
-    """YAML subset parser when PyYAML is unavailable (still offline)."""
     projects: list[dict] = []
     cur: dict | None = None
     in_commands = False
@@ -112,7 +129,6 @@ def _minimal_parse(text: str) -> dict:
 
 
 def normalize_registry(reg: dict) -> dict:
-    """Coerce types and fill defaults so consumers never see int ids."""
     projects = []
     for raw in reg.get("projects") or []:
         if not isinstance(raw, dict):
@@ -150,10 +166,6 @@ def load_registry() -> dict:
 
 
 def validate_registry(reg: dict, *, check_paths: bool = True) -> list[str]:
-    """Return list of human-readable validation errors (empty = ok).
-
-    check_paths=False is for CI/hub-only checkouts (nested projects absent).
-    """
     errors: list[str] = []
     if not reg.get("projects"):
         errors.append("registry has no projects")
@@ -210,26 +222,55 @@ def project_path(p: dict) -> Path:
     return LYFF_ROOT / (p.get("path") or p["id"])
 
 
+def project_snapshot(p: dict) -> dict:
+    path = project_path(p)
+    exists = path.is_dir()
+    dirty_txt = git(path, "status", "--porcelain") if exists else ""
+    return {
+        "id": p["id"],
+        "name": p.get("name"),
+        "path": str(path),
+        "role": p.get("role"),
+        "status": p.get("status"),
+        "offline_ok": p.get("offline_ok"),
+        "exists": exists,
+        "is_git": exists and (path / ".git").exists(),
+        "branch": git(path, "rev-parse", "--abbrev-ref", "HEAD") if exists else None,
+        "head": git(path, "log", "-1", "--format=%h %s") if exists else None,
+        "dirty": len(dirty_txt.splitlines()) if dirty_txt else 0,
+        "commands": list((p.get("commands") or {}).keys()),
+    }
+
+
+def flag_json(args: list[str]) -> tuple[list[str], bool]:
+    want = "--json" in args
+    return [a for a in args if a != "--json"], want
+
+
 def cmd_help() -> None:
     print(
         f"""lyff {VERSION} — offline portfolio hub
 
 Usage:
-  lyff status              Nested repo status (no network)
-  lyff doctor              Toolchain + paths + registry validation
-  lyff list                Projects from registry
-  lyff validate            Validate registry only
+  lyff status [--json]     Nested repo status (no network)
+  lyff summary [--json]    One-screen portfolio dashboard
+  lyff doctor              Toolchain + paths + registry
+  lyff list [--json]       Projects from registry
+  lyff validate [--schema] Validate registry
+  lyff discover            Unregistered git directories
+  lyff prep                Offline dependency checklist
   lyff info <id>           JSON details for one project
   lyff path <id>           Absolute path
-  lyff docs [topic]        Print docs (index|offline|portfolio|…)
+  lyff docs [topic]        Print docs
   lyff run <id> <cmd>      Named command from registry
   lyff run <id> -- <sh>    Arbitrary shell in project dir
   lyff foreach <sh…>       Run shell in every project
-  lyff bundle [out.tgz]    Offline tarball of hub + projects
-  lyff registry            Show registry path
-  lyff root                Show hub root
-  lyff version             Print CLI version
-  lyff help                This help
+  lyff bundle [out.tgz]    Offline tarball (+ MANIFEST.json)
+  lyff completion <shell>  Print bash|zsh completion script
+  lyff registry | root | version | help
+
+Shell helpers:
+  source ~/lyff/share/lyff.sh   # lyffcd <id> + completions
 
 Docs: docs/index.md
 Remote: https://github.com/lyffseba/lyff
@@ -238,42 +279,112 @@ Motto: First do it, then do it right, then do it better.
     )
 
 
-def cmd_list(reg: dict) -> None:
+def cmd_list(reg: dict, *, as_json: bool = False) -> None:
+    if as_json:
+        print(json.dumps(reg.get("projects") or [], indent=2))
+        return
     print(f"{'ID':12} {'STATUS':12} {'ROLE':10} {'OFFLINE':10} NAME")
     print("-" * 72)
     for p in reg.get("projects") or []:
+        st = p.get("status", "")
+        st_s = c("33", st) if st == "superseded" else st
         print(
-            f"{p['id']:12} {p.get('status', ''):12} "
+            f"{p['id']:12} {st_s:12} "
             f"{p.get('role', ''):10} {str(p.get('offline_ok', '')):10} "
             f"{p.get('name', '')}"
         )
 
 
-def cmd_status(reg: dict) -> None:
+def cmd_status(reg: dict, *, as_json: bool = False) -> None:
+    snaps = [project_snapshot(p) for p in reg.get("projects") or []]
+    if as_json:
+        print(
+            json.dumps(
+                {
+                    "hub": str(LYFF_ROOT),
+                    "version": VERSION,
+                    "offline": reg.get("offline"),
+                    "projects": snaps,
+                },
+                indent=2,
+            )
+        )
+        return
+
     print(f"lyff hub @ {LYFF_ROOT}  (cli {VERSION})")
     print(f"offline={reg.get('offline')}  {reg.get('motto', '')}")
     print()
     print(f"{'ID':12} {'BRANCH':12} {'DIRTY':6} {'OFFLINE':10} HEAD")
     print("-" * 90)
-    for p in reg.get("projects") or []:
-        path = project_path(p)
-        pid = p["id"]
-        if not path.is_dir():
+    for s in snaps:
+        pid = s["id"]
+        if not s["exists"]:
             print(
-                f"{pid:12} {'—':12} {'MISS':6} "
-                f"{str(p.get('offline_ok', '')):10} (missing directory)"
+                f"{pid:12} {'—':12} {c('31','MISS'):6} "
+                f"{str(s.get('offline_ok', '')):10} (missing directory)"
             )
             continue
-        branch = git(path, "rev-parse", "--abbrev-ref", "HEAD") or "?"
-        dirty_txt = git(path, "status", "--porcelain")
-        dirty = str(len(dirty_txt.splitlines()) if dirty_txt else 0)
-        head = git(path, "log", "-1", "--format=%h %s") or "(no commits)"
+        branch = s["branch"] or "?"
+        dirty = str(s["dirty"])
+        dirty_s = c("33", dirty) if s["dirty"] else dirty
+        head = s["head"] or "(no commits)"
         if len(head) > 52:
             head = head[:49] + "..."
-        print(
-            f"{pid:12} {branch:12} {dirty:6} "
-            f"{str(p.get('offline_ok', '')):10} {head}"
-        )
+        off = str(s.get("offline_ok", ""))
+        off_s = c("32", off) if off in ("true", "True", True) or off is True else str(off)
+        if str(off) == "partial":
+            off_s = c("33", "partial")
+        # pad without counting ANSI
+        print(f"{pid:12} {branch:12} {dirty:6} {str(off):10} {head}")
+
+
+def cmd_summary(reg: dict, *, as_json: bool = False) -> None:
+    snaps = [project_snapshot(p) for p in reg.get("projects") or []]
+    active = [s for s in snaps if s.get("status") == "active"]
+    dirty = [s for s in snaps if s.get("dirty")]
+    missing = [s for s in snaps if not s.get("exists")]
+    offline_full = [
+        s
+        for s in snaps
+        if s.get("offline_ok") in (True, "true", "True")
+    ]
+    payload = {
+        "version": VERSION,
+        "hub": str(LYFF_ROOT),
+        "total": len(snaps),
+        "active": len(active),
+        "dirty": [s["id"] for s in dirty],
+        "missing": [s["id"] for s in missing],
+        "offline_full": len(offline_full),
+        "motto": reg.get("motto"),
+    }
+    if as_json:
+        print(json.dumps(payload, indent=2))
+        return
+
+    print(c("1", "lyff summary"))
+    print(f"  hub:     {LYFF_ROOT}")
+    print(f"  cli:     {VERSION}")
+    print(f"  motto:   {reg.get('motto')}")
+    print(f"  projects:{len(snaps)}  active:{len(active)}  offline-full:{len(offline_full)}")
+    if dirty:
+        print(c("33", f"  dirty:   {', '.join(s['id'] for s in dirty)}"))
+    else:
+        print(c("32", "  dirty:   none"))
+    if missing:
+        print(c("31", f"  missing: {', '.join(s['id'] for s in missing)}"))
+    print()
+    print(f"  {'id':12} {'role':10} {'offline':8} head")
+    for s in snaps:
+        head = (s.get("head") or "—")[:40]
+        mark = "·"
+        if s.get("status") == "superseded":
+            mark = "∅"
+        elif s.get("dirty"):
+            mark = "●"
+        print(f"  {mark} {s['id']:10} {str(s.get('role')):10} {str(s.get('offline_ok')):8} {head}")
+    print()
+    print("  legend: · clean  ● dirty  ∅ superseded")
 
 
 def cmd_doctor(reg: dict) -> int:
@@ -281,7 +392,7 @@ def cmd_doctor(reg: dict) -> int:
 
     def check(name: str, ok: bool, detail: str = "") -> None:
         nonlocal issues
-        mark = "OK " if ok else "!! "
+        mark = c("32", "OK ") if ok else c("31", "!! ")
         if not ok:
             issues += 1
         print(f"  {mark}{name}" + (f" — {detail}" if detail else ""))
@@ -308,9 +419,10 @@ def cmd_doctor(reg: dict) -> int:
             check(name, False, "not found")
 
     print("\nRegistry")
-    for err in validate_registry(reg):
+    errs = validate_registry(reg)
+    for err in errs:
         check(err, False)
-    if not validate_registry(reg):
+    if not errs:
         check("registry valid", True, f"{len(reg.get('projects') or [])} projects")
 
     print("\nProjects")
@@ -333,6 +445,7 @@ def cmd_doctor(reg: dict) -> int:
     check("docs/index.md", (DOCS_DIR / "index.md").is_file())
     check("bin/lyff", (LYFF_ROOT / "bin" / "lyff").is_file())
     check("executable bit", os.access(LYFF_ROOT / "bin" / "lyff", os.X_OK))
+    check("share/lyff.sh", (SHARE_DIR / "lyff.sh").is_file())
 
     print()
     if issues:
@@ -340,7 +453,7 @@ def cmd_doctor(reg: dict) -> int:
             f"doctor: {issues} issue(s) flagged — hub docs/status still offline-safe"
         )
         return 1
-    print("doctor: all clear")
+    print(c("32", "doctor: all clear"))
     return 0
 
 
@@ -355,31 +468,69 @@ def cmd_validate(reg: dict, *, check_paths: bool = True) -> int:
     return 0
 
 
+def cmd_discover(reg: dict) -> int:
+    """Find git repos under hub not listed in registry."""
+    registered = {p["path"] for p in reg.get("projects") or []}
+    registered |= {p["id"] for p in reg.get("projects") or []}
+    found = []
+    for child in sorted(LYFF_ROOT.iterdir()):
+        if not child.is_dir() or child.name.startswith("."):
+            continue
+        if child.name in ("docs", "bin", "tests", "share", ".github"):
+            continue
+        if (child / ".git").exists() and child.name not in registered:
+            found.append(child.name)
+    if not found:
+        print("discover: no unregistered git directories")
+        return 0
+    print("discover: unregistered git directories (add to registry.yaml?):")
+    for name in found:
+        head = git(child := LYFF_ROOT / name, "log", "-1", "--format=%h %s")
+        print(f"  - {name}: {head or '(empty?)'}")
+    return 0
+
+
+def cmd_prep(reg: dict) -> int:
+    """Print offline prep checklist and optional recorded state."""
+    print(c("1", "Offline prep checklist"))
+    print("Run while online once per machine, then disconnect.\n")
+    steps = [
+        ("43", "make -C libft bonus", "Libft builds offline"),
+        ("bet", "cargo fetch && cargo build --release", "Rust deps cached"),
+        ("witness", "go mod download && make build", "Go modules cached"),
+        ("ai", "npm install --ignore-scripts", "Node deps for agent"),
+        ("rugs", "npm install", "Node deps for storefront"),
+        ("maxi", "pixi install && pixi run test", "Mojo/MAX toolchain"),
+        (
+            "ents",
+            "python3 -m venv .venv && .venv/bin/pip install -r web/requirements.txt httpx",
+            "Python web + demo Gemini",
+        ),
+        ("44", "npm install", "Piscine World deps"),
+    ]
+    for pid, cmd, why in steps:
+        p = project_by_id(reg, pid)
+        exists = p and project_path(p).is_dir()
+        mark = c("32", "·") if exists else c("31", "✗")
+        print(f"  {mark} lyff run {pid} -- {cmd}")
+        print(f"      # {why}")
+    print()
+    print("Then: lyff bundle   # optional airplane archive")
+    print("      lyff doctor && lyff summary")
+    return 0
+
+
 def cmd_info(reg: dict, pid: str) -> None:
     p = project_by_id(reg, pid)
     if not p:
         print(f"unknown project: {pid}", file=sys.stderr)
-        print("known:", ", ".join(x["id"] for x in reg.get("projects") or []), file=sys.stderr)
-        sys.exit(1)
-    path = project_path(p)
-    print(
-        json.dumps(
-            {
-                **p,
-                "abs_path": str(path),
-                "branch": git(path, "rev-parse", "--abbrev-ref", "HEAD")
-                if path.is_dir()
-                else None,
-                "head": git(path, "log", "-1", "--format=%h %s")
-                if path.is_dir()
-                else None,
-                "dirty": bool(git(path, "status", "--porcelain"))
-                if path.is_dir()
-                else None,
-            },
-            indent=2,
+        print(
+            "known:",
+            ", ".join(x["id"] for x in reg.get("projects") or []),
+            file=sys.stderr,
         )
-    )
+        sys.exit(1)
+    print(json.dumps(project_snapshot(p) | {"registry": p}, indent=2, default=str))
 
 
 def cmd_path(reg: dict, pid: str) -> None:
@@ -396,9 +547,9 @@ def cmd_docs(topic: str | None) -> None:
         DOCS_DIR / f"{topic}.md",
         DOCS_DIR / topic / "index.md",
     ]
-    for c in candidates:
-        if c.is_file():
-            sys.stdout.write(c.read_text(encoding="utf-8"))
+    for cand in candidates:
+        if cand.is_file():
+            sys.stdout.write(cand.read_text(encoding="utf-8"))
             return
     print(f"no doc for topic: {topic}", file=sys.stderr)
     topics = sorted(p.stem for p in DOCS_DIR.glob("*.md"))
@@ -472,8 +623,8 @@ def _bundle_should_skip_file(path: Path, out_resolved: Path) -> bool:
     return False
 
 
-def cmd_bundle(out_arg: str | None) -> int:
-    """Create an offline tarball of the whole lyff tree (no network)."""
+def cmd_bundle(reg: dict, out_arg: str | None) -> int:
+    """Create an offline tarball including MANIFEST.json."""
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out = Path(out_arg) if out_arg else LYFF_ROOT / f"lyff-offline-{stamp}.tar.gz"
     if not out.is_absolute():
@@ -481,14 +632,31 @@ def cmd_bundle(out_arg: str | None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out_resolved = out.resolve()
 
+    snaps = [project_snapshot(p) for p in reg.get("projects") or []]
+    manifest = {
+        "lyff_version": VERSION,
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "hub": str(LYFF_ROOT),
+        "motto": reg.get("motto"),
+        "projects": snaps,
+        "excludes": sorted(BUNDLE_EXCLUDE_DIRS),
+    }
+    manifest_bytes = (json.dumps(manifest, indent=2) + "\n").encode()
+
     print(f"bundling {LYFF_ROOT} → {out}", flush=True)
     count = 0
     with tarfile.open(out, "w:gz") as tar:
+        # Manifest first
+        import io
+
+        info = tarfile.TarInfo(name="lyff/MANIFEST.json")
+        info.size = len(manifest_bytes)
+        info.mtime = int(time.time())
+        tar.addfile(info, io.BytesIO(manifest_bytes))
+        count += 1
+
         for dirpath, dirnames, filenames in os.walk(LYFF_ROOT, followlinks=False):
-            # Prune heavy / cache dirs; keep nested .git for offline git history
-            dirnames[:] = sorted(
-                d for d in dirnames if d not in BUNDLE_EXCLUDE_DIRS
-            )
+            dirnames[:] = sorted(d for d in dirnames if d not in BUNDLE_EXCLUDE_DIRS)
             rel_base = Path(dirpath).relative_to(LYFF_ROOT)
             for fn in sorted(filenames):
                 fp = Path(dirpath) / fn
@@ -502,7 +670,21 @@ def cmd_bundle(out_arg: str | None) -> int:
 
     size_mb = out.stat().st_size / (1024 * 1024)
     print(f"done: {count} files, {size_mb:.1f} MiB → {out}")
-    print(f"extract: tar -xzf {out.name} && cd lyff && ./bin/lyff status")
+    print(f"extract: tar -xzf {out.name} && cd lyff && ./bin/lyff summary")
+    return 0
+
+
+def cmd_completion(shell: str) -> int:
+    shell = shell.lower().strip()
+    mapping = {
+        "bash": SHARE_DIR / "completions" / "lyff.bash",
+        "zsh": SHARE_DIR / "completions" / "lyff.zsh",
+    }
+    path = mapping.get(shell)
+    if not path or not path.is_file():
+        print("usage: lyff completion bash|zsh", file=sys.stderr)
+        return 2
+    sys.stdout.write(path.read_text(encoding="utf-8"))
     return 0
 
 
@@ -520,39 +702,54 @@ def main() -> None:
         return
 
     cmd = args[0]
-    if cmd == "version" or cmd == "--version":
+    rest = args[1:]
+
+    if cmd in ("version", "--version"):
         print(VERSION)
     elif cmd == "status":
-        cmd_status(reg)
+        rest, as_json = flag_json(rest)
+        cmd_status(reg, as_json=as_json)
+    elif cmd == "summary":
+        rest, as_json = flag_json(rest)
+        cmd_summary(reg, as_json=as_json)
     elif cmd == "doctor":
         sys.exit(cmd_doctor(reg))
     elif cmd == "validate":
-        # --schema: structure only (CI without nested checkouts)
-        check_paths = "--schema" not in args[1:]
+        check_paths = "--schema" not in rest
         sys.exit(cmd_validate(reg, check_paths=check_paths))
     elif cmd == "list":
-        cmd_list(reg)
+        rest, as_json = flag_json(rest)
+        cmd_list(reg, as_json=as_json)
+    elif cmd == "discover":
+        sys.exit(cmd_discover(reg))
+    elif cmd == "prep":
+        sys.exit(cmd_prep(reg))
     elif cmd == "info":
-        if len(args) < 2:
+        if not rest:
             print("usage: lyff info <id>", file=sys.stderr)
             sys.exit(2)
-        cmd_info(reg, args[1])
+        cmd_info(reg, rest[0])
     elif cmd == "path":
-        if len(args) < 2:
+        if not rest:
             print("usage: lyff path <id>", file=sys.stderr)
             sys.exit(2)
-        cmd_path(reg, args[1])
+        cmd_path(reg, rest[0])
     elif cmd == "docs":
-        cmd_docs(args[1] if len(args) > 1 else "index")
+        cmd_docs(rest[0] if rest else "index")
     elif cmd == "run":
-        if len(args) < 2:
+        if not rest:
             print("usage: lyff run <id> …", file=sys.stderr)
             sys.exit(2)
-        cmd_run(reg, args[1], args[2:])
+        cmd_run(reg, rest[0], rest[1:])
     elif cmd == "foreach":
-        sys.exit(cmd_foreach(reg, args[1:]))
+        sys.exit(cmd_foreach(reg, rest))
     elif cmd == "bundle":
-        sys.exit(cmd_bundle(args[1] if len(args) > 1 else None))
+        sys.exit(cmd_bundle(reg, rest[0] if rest else None))
+    elif cmd == "completion":
+        if not rest:
+            print("usage: lyff completion bash|zsh", file=sys.stderr)
+            sys.exit(2)
+        sys.exit(cmd_completion(rest[0]))
     elif cmd == "registry":
         print(REGISTRY_PATH)
     elif cmd == "root":
