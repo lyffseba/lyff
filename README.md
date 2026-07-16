@@ -79,6 +79,16 @@ Start at **[docs/index.md](docs/index.md)**.
 
 Each has its own `.git` and (usually) its own GitHub remote. The hub only tracks **docs + orchestration**.
 
+## Quality
+
+```bash
+make test           # offline unit tests
+./bin/lyff validate
+./bin/lyff doctor
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the PR workflow (`main` is protected).
+
 ## Hub git
 
 ```bash
@@ -86,3 +96,5 @@ cd ~/lyff
 git status          # hub meta only
 # product code changes: cd into project, commit there
 ```
+
+License: [MIT](LICENSE).
