@@ -18,7 +18,19 @@ Installed from `bin/lyff` to `~/.local/bin/lyff` via `make install`.
 | `lyff open <id>` | `cd` helper (prints path; use `cd $(lyff path <id>)`) |
 | `lyff path <id>` | Print absolute path |
 | `lyff bundle [out.tgz]` | Airplane tarball (excludes `node_modules`, `.pixi`, `.venv`, secrets) |
-| `lyff registry` | Print `registry.yaml` path / validate |
+| `lyff validate` | Validate registry paths and ids |
+| `lyff version` | CLI version |
+| `lyff registry` | Print `registry.yaml` path |
+
+## Quality checks
+
+```bash
+make test       # unittest (offline)
+make validate
+make test-cli
+```
+
+Hub CI (GitHub Actions) runs the same offline tests on PRs to `main`.
 
 ## Makefile
 

@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML (registry loader)
+        run: pip install pyyaml
+      - name: Unit tests (offline)
+        run: python -m unittest discover -s tests -v
+      - name: CLI smoke
+        run: |
+          ./bin/lyff version
+          ./bin/lyff validate --schema
+          ./bin/lyff list
+          ./bin/lyff docs index | head -5
+          ./bin/lyff status

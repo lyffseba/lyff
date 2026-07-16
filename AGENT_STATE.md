@@ -2,12 +2,14 @@
 
 > Offline command center for documentation and orchestration of `~/lyff`.
 
-## Current Status (2026-07-16)
+## Current Status (2026-07-16 — do it right)
 
 - **Hub model:** Parent git repo tracks **docs + orchestration only**. Nested projects keep independent `.git` histories (no submodules; fully usable offline once cloned).
-- **CLI:** `bin/lyff` → install to `~/.local/bin/lyff`.
+- **Remote:** https://github.com/lyffseba/lyff (public; PR-protected `main`).
+- **CLI:** `bin/lyff` v0.2 — validate, normalize int ids, bundle, foreach exit codes.
+- **Tests:** `tests/test_lyff_cli.py` + `make test` + CI workflow.
 - **Registry:** `registry.yaml` is the source of truth for project ids, roles, and offline commands.
-- **Docs:** `docs/` is the portfolio documentation spine.
+- **Docs:** `docs/` + CONTRIBUTING (PR workflow).
 
 ## Projects
 
