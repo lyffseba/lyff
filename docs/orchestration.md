@@ -48,3 +48,22 @@ make docs
 2. **Registry-driven** — add a project by editing `registry.yaml`, not hardcoding the CLI.
 3. **Nested independence** — each product keeps its own git history and remotes.
 4. **Agent-friendly** — `AGENTS.md` + `AGENT_STATE.md` for coding agents landing in the hub.
+
+## v0.3 extras
+
+| Command | |
+|---------|--|
+| `lyff summary [--json]` | Dashboard: dirty/missing/offline counts |
+| `lyff status --json` | Machine-readable status for agents |
+| `lyff discover` | Git dirs under hub not in registry |
+| `lyff prep` | Offline dependency checklist |
+| `lyff completion bash\|zsh` | Shell completion script |
+| `lyff bundle` | Includes `MANIFEST.json` with project heads |
+
+Shell:
+
+```bash
+source ~/lyff/share/lyff.sh   # lyffcd <id> + completions
+# or
+eval "$(lyff completion bash)"
+```

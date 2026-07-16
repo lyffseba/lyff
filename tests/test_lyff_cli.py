@@ -110,7 +110,32 @@ class TestCLISubprocess(unittest.TestCase):
         self.assertEqual(r.returncode, 0)
         self.assertIn("lyff documentation", r.stdout)
 
+    def test_summary(self):
+        r = self.run_cli("summary", "--json")
+        self.assertEqual(r.returncode, 0)
+        import json
+        data = json.loads(r.stdout)
+        self.assertIn("total", data)
+        self.assertGreaterEqual(data["total"], 1)
+
+    def test_status_json(self):
+        r = self.run_cli("status", "--json")
+        self.assertEqual(r.returncode, 0)
+        import json
+        data = json.loads(r.stdout)
+        self.assertIn("projects", data)
+
+    def test_discover(self):
+        r = self.run_cli("discover")
+        self.assertEqual(r.returncode, 0)
+
+    def test_completion_bash(self):
+        r = self.run_cli("completion", "bash")
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("_lyff", r.stdout)
+
     def test_unknown_command(self):
+
         r = self.run_cli("not-a-command")
         self.assertNotEqual(r.returncode, 0)
 
@@ -120,7 +145,8 @@ class TestBundle(unittest.TestCase):
         lyff = load_lyff()
         with tempfile.TemporaryDirectory() as td:
             out = Path(td) / "test.tgz"
-            rc = lyff.cmd_bundle(str(out))
+            reg = lyff.load_registry()
+            rc = lyff.cmd_bundle(reg, str(out))
             self.assertEqual(rc, 0)
             self.assertTrue(out.is_file())
             self.assertGreater(out.stat().st_size, 1000)
@@ -128,6 +154,7 @@ class TestBundle(unittest.TestCase):
                 names = tar.getnames()
             self.assertTrue(any(n.endswith("bin/lyff") for n in names))
             self.assertTrue(any(n.endswith("registry.yaml") for n in names))
+            self.assertTrue(any(n.endswith("MANIFEST.json") for n in names))
             # heavy dirs excluded
             self.assertFalse(any("/node_modules/" in n for n in names))
             self.assertFalse(any("/.pixi/" in n for n in names))

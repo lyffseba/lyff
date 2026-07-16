@@ -18,10 +18,15 @@
 ```bash
 # from anywhere after install
 lyff status
+lyff summary
 lyff doctor
-lyff docs
+lyff prep                 # offline dependency checklist
+lyff docs offline
 lyff run bet build
-lyff foreach status
+lyff bundle
+
+# shell helpers (lyffcd + completions)
+source ~/lyff/share/lyff.sh
 
 # or from repo root
 ./bin/lyff status
@@ -32,14 +37,15 @@ make help
 
 ```text
 lyff/
-├── bin/lyff           # center CLI
-├── docs/              # this documentation
-├── registry.yaml      # project registry (source of truth)
-├── AGENTS.md          # instructions for coding agents
-├── AGENT_STATE.md     # hub session memory
+├── bin/lyff              # center CLI (v0.3+)
+├── share/lyff.sh         # lyffcd + completions
+├── share/completions/    # bash / zsh
+├── docs/                 # portfolio documentation
+├── tests/                # offline unit tests
+├── registry.yaml         # project source of truth
+├── AGENTS.md / AGENT_STATE.md
 ├── Makefile
-├── README.md
-└── <projects>/        # independent nested git repos (local checkouts)
+└── <projects>/           # independent nested git repos
 ```
 
 ## Nested projects (summary)

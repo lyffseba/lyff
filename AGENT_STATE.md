@@ -6,7 +6,7 @@
 
 - **Hub model:** Parent git repo tracks **docs + orchestration only**. Nested projects keep independent `.git` histories (no submodules; fully usable offline once cloned).
 - **Remote:** https://github.com/lyffseba/lyff (public; PR-protected `main`).
-- **CLI:** `bin/lyff` v0.2 — validate, normalize int ids, bundle, foreach exit codes.
+- **CLI:** `bin/lyff` v0.3 — validate, normalize int ids, bundle, foreach exit codes.
 - **Tests:** `tests/test_lyff_cli.py` + `make test` + CI workflow.
 - **Registry:** `registry.yaml` is the source of truth for project ids, roles, and offline commands.
 - **Docs:** `docs/` + CONTRIBUTING (PR workflow).

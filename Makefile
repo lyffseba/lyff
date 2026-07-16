@@ -15,6 +15,7 @@ help:
 	@echo "  make test       unit tests (offline)"
 	@echo "  make bundle     airplane tarball"
 	@echo "  make test-cli   smoke the CLI"
+	@echo "  make summary    portfolio dashboard"
 
 status:
 	$(LYFF) status
@@ -57,3 +58,6 @@ test-cli: test
 	$(LYFF) path bet
 	$(LYFF) docs offline | head -5
 	@echo "CLI smoke OK"
+
+summary:
+	$(LYFF) summary
