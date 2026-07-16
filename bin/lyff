@@ -1,0 +1,354 @@
+#!/usr/bin/env python3
+"""lyff — offline portfolio hub CLI (center command for ~/lyff)."""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+LYFF_ROOT = Path(__file__).resolve().parent.parent
+REGISTRY = LYFF_ROOT / "registry.yaml"
+
+
+def load_registry() -> dict:
+    text = REGISTRY.read_text(encoding="utf-8")
+    try:
+        import yaml  # type: ignore
+
+        return yaml.safe_load(text)
+    except Exception:
+        pass
+    cache = LYFF_ROOT / ".lyff" / "registry.json"
+    if cache.exists():
+        return json.loads(cache.read_text(encoding="utf-8"))
+    return _minimal_parse(text)
+
+
+def _minimal_parse(text: str) -> dict:
+    """Best-effort YAML subset if PyYAML is not installed (still offline)."""
+    projects: list[dict] = []
+    cur: dict | None = None
+    in_commands = False
+    for raw in text.splitlines():
+        line = raw.rstrip()
+        if line.strip().startswith("- id:"):
+            if cur:
+                projects.append(cur)
+            cur = {
+                "id": line.split(":", 1)[1].strip(),
+                "commands": {},
+            }
+            in_commands = False
+            continue
+        if cur is None:
+            continue
+        stripped = line.strip()
+        if stripped == "commands:":
+            in_commands = True
+            continue
+        if not stripped or stripped.startswith("#"):
+            continue
+        if ":" not in stripped:
+            continue
+        key, _, val = stripped.partition(":")
+        key, val = key.strip(), val.strip().strip('"').strip("'")
+        if key in (
+            "path",
+            "name",
+            "status",
+            "role",
+            "offline_ok",
+            "superseded_by",
+            "remote",
+        ):
+            in_commands = False
+            cur[key] = val
+        elif in_commands and key and val:
+            cur.setdefault("commands", {})[key] = val
+        elif key == "stack":
+            in_commands = False
+    if cur:
+        projects.append(cur)
+    return {
+        "projects": projects,
+        "motto": "First do it, then do it right, then do it better.",
+        "offline": True,
+    }
+
+
+def cache_registry(reg: dict) -> None:
+    cache_dir = LYFF_ROOT / ".lyff"
+    cache_dir.mkdir(exist_ok=True)
+    (cache_dir / "registry.json").write_text(json.dumps(reg, indent=2), encoding="utf-8")
+
+
+def git(cwd: Path, *args: str) -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "-C", str(cwd), *args],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except Exception:
+        return ""
+
+
+def project_by_id(reg: dict, pid: str) -> dict | None:
+    for p in reg.get("projects") or []:
+        if p.get("id") == pid:
+            return p
+    return None
+
+
+def cmd_help() -> None:
+    print(
+        """lyff — offline portfolio hub
+
+Usage:
+  lyff status              Nested repo status (no network)
+  lyff doctor              Toolchain + paths healthcheck
+  lyff list                Projects from registry
+  lyff info <id>           JSON details for one project
+  lyff path <id>           Absolute path
+  lyff docs [topic]        Print docs (index|offline|portfolio|…)
+  lyff run <id> <cmd>      Named command from registry
+  lyff run <id> -- <sh>    Arbitrary shell in project dir
+  lyff foreach <sh…>       Run shell in every project
+  lyff registry            Show registry path
+  lyff root                Show hub root
+  lyff help                This help
+
+Docs: docs/index.md
+Motto: First do it, then do it right, then do it better.
+"""
+    )
+
+
+def cmd_list(reg: dict) -> None:
+    print(f"{'ID':12} {'STATUS':12} {'ROLE':10} {'OFFLINE':10} NAME")
+    print("-" * 72)
+    for p in reg.get("projects") or []:
+        print(
+            f"{p.get('id', ''):12} {str(p.get('status', '')):12} "
+            f"{str(p.get('role', '')):10} {str(p.get('offline_ok', '')):10} "
+            f"{p.get('name', '')}"
+        )
+
+
+def cmd_status(reg: dict) -> None:
+    print(f"lyff hub @ {LYFF_ROOT}")
+    print(f"offline={reg.get('offline')}  {reg.get('motto', '')}")
+    print()
+    print(f"{'ID':12} {'BRANCH':12} {'DIRTY':6} {'OFFLINE':10} HEAD")
+    print("-" * 90)
+    for p in reg.get("projects") or []:
+        path = LYFF_ROOT / p.get("path", p["id"])
+        if not path.is_dir():
+            print(
+                f"{p['id']:12} {'—':12} {'MISS':6} "
+                f"{str(p.get('offline_ok', '')):10} (missing directory)"
+            )
+            continue
+        branch = git(path, "rev-parse", "--abbrev-ref", "HEAD") or "?"
+        dirty_txt = git(path, "status", "--porcelain")
+        dirty = str(len(dirty_txt.splitlines()) if dirty_txt else 0)
+        head = git(path, "log", "-1", "--format=%h %s") or "(no commits)"
+        if len(head) > 52:
+            head = head[:49] + "..."
+        print(
+            f"{p['id']:12} {branch:12} {dirty:6} "
+            f"{str(p.get('offline_ok', '')):10} {head}"
+        )
+
+
+def cmd_doctor(reg: dict) -> int:
+    issues = 0
+
+    def check(name: str, ok: bool, detail: str = "") -> None:
+        nonlocal issues
+        mark = "OK " if ok else "!! "
+        if not ok:
+            issues += 1
+        print(f"  {mark}{name}" + (f" — {detail}" if detail else ""))
+
+    print("Toolchain (presence only; missing tools are fine if unused)")
+    tools = [
+        ("git", ["git", "--version"]),
+        ("node", ["node", "-v"]),
+        ("npm", ["npm", "-v"]),
+        ("cargo", ["cargo", "-V"]),
+        ("go", ["go", "version"]),
+        ("python3", ["python3", "--version"]),
+        ("pixi", ["pixi", "--version"]),
+        ("make", ["make", "--version"]),
+        ("cc", ["cc", "--version"]),
+    ]
+    for name, argv in tools:
+        try:
+            out = subprocess.check_output(
+                argv, text=True, stderr=subprocess.STDOUT
+            ).splitlines()[0]
+            check(name, True, out[:60])
+        except Exception:
+            check(name, False, "not found")
+
+    print("\nProjects")
+    for p in reg.get("projects") or []:
+        path = LYFF_ROOT / p.get("path", p["id"])
+        ok = path.is_dir() and (path / ".git").exists()
+        check(p["id"], ok, str(path) if ok else f"missing {path}")
+        if ok:
+            dirty = git(path, "status", "--porcelain")
+            if dirty:
+                check(
+                    f"{p['id']} clean",
+                    False,
+                    f"{len(dirty.splitlines())} dirty paths",
+                )
+
+    print("\nHub")
+    check("registry.yaml", REGISTRY.is_file())
+    check("docs/index.md", (LYFF_ROOT / "docs" / "index.md").is_file())
+    check("bin/lyff", (LYFF_ROOT / "bin" / "lyff").is_file())
+
+    print()
+    if issues:
+        print(f"doctor: {issues} issue(s) flagged — hub docs/status still offline-safe")
+        return 1
+    print("doctor: all clear")
+    return 0
+
+
+def cmd_info(reg: dict, pid: str) -> None:
+    p = project_by_id(reg, pid)
+    if not p:
+        print(f"unknown project: {pid}", file=sys.stderr)
+        sys.exit(1)
+    path = LYFF_ROOT / p.get("path", pid)
+    print(
+        json.dumps(
+            {
+                **p,
+                "abs_path": str(path),
+                "branch": git(path, "rev-parse", "--abbrev-ref", "HEAD")
+                if path.is_dir()
+                else None,
+                "head": git(path, "log", "-1", "--format=%h %s")
+                if path.is_dir()
+                else None,
+                "dirty": bool(git(path, "status", "--porcelain"))
+                if path.is_dir()
+                else None,
+            },
+            indent=2,
+        )
+    )
+
+
+def cmd_path(reg: dict, pid: str) -> None:
+    p = project_by_id(reg, pid)
+    if not p:
+        print(f"unknown project: {pid}", file=sys.stderr)
+        sys.exit(1)
+    print(LYFF_ROOT / p.get("path", pid))
+
+
+def cmd_docs(topic: str | None) -> None:
+    topic = topic or "index"
+    candidates = [
+        LYFF_ROOT / "docs" / f"{topic}.md",
+        LYFF_ROOT / "docs" / topic / "index.md",
+    ]
+    for c in candidates:
+        if c.is_file():
+            sys.stdout.write(c.read_text(encoding="utf-8"))
+            return
+    print(f"no doc for topic: {topic}", file=sys.stderr)
+    print("try: index | offline | portfolio | orchestration | philosophy", file=sys.stderr)
+    sys.exit(1)
+
+
+def cmd_run(reg: dict, pid: str, rest: list[str]) -> None:
+    p = project_by_id(reg, pid)
+    if not p:
+        print(f"unknown project: {pid}", file=sys.stderr)
+        sys.exit(1)
+    path = LYFF_ROOT / p.get("path", pid)
+    if not path.is_dir():
+        print(f"missing directory: {path}", file=sys.stderr)
+        sys.exit(1)
+    cmds = p.get("commands") or {}
+    if rest and rest[0] == "--":
+        shell_cmd = " ".join(rest[1:])
+    elif rest and rest[0] in cmds:
+        shell_cmd = cmds[rest[0]]
+    elif rest:
+        shell_cmd = " ".join(rest)
+    else:
+        print(f"usage: lyff run {pid} <cmd|-- shell…>", file=sys.stderr)
+        print("named commands:", ", ".join(cmds) or "(none)", file=sys.stderr)
+        sys.exit(2)
+    if not shell_cmd.strip():
+        print("empty command", file=sys.stderr)
+        sys.exit(2)
+    print(f"+ ({path}) {shell_cmd}")
+    os.chdir(path)
+    os.execvp("bash", ["bash", "-lc", shell_cmd])
+
+
+def cmd_foreach(reg: dict, rest: list[str]) -> None:
+    if not rest:
+        print("usage: lyff foreach <shell command…>", file=sys.stderr)
+        sys.exit(2)
+    shell_cmd = " ".join(rest)
+    for p in reg.get("projects") or []:
+        path = LYFF_ROOT / p.get("path", p["id"])
+        if not path.is_dir():
+            print(f"## {p['id']} (missing)")
+            continue
+        print(f"## {p['id']}")
+        subprocess.call(["bash", "-lc", shell_cmd], cwd=path)
+
+
+def main() -> None:
+    reg = load_registry()
+    cache_registry(reg)
+
+    args = sys.argv[1:]
+    if not args or args[0] in ("help", "-h", "--help"):
+        cmd_help()
+        return
+
+    cmd = args[0]
+    if cmd == "status":
+        cmd_status(reg)
+    elif cmd == "doctor":
+        sys.exit(cmd_doctor(reg))
+    elif cmd == "list":
+        cmd_list(reg)
+    elif cmd == "info":
+        cmd_info(reg, args[1] if len(args) > 1 else "")
+    elif cmd == "path":
+        cmd_path(reg, args[1] if len(args) > 1 else "")
+    elif cmd == "docs":
+        cmd_docs(args[1] if len(args) > 1 else "index")
+    elif cmd == "run":
+        if len(args) < 2:
+            print("usage: lyff run <id> …", file=sys.stderr)
+            sys.exit(2)
+        cmd_run(reg, args[1], args[2:])
+    elif cmd == "foreach":
+        cmd_foreach(reg, args[1:])
+    elif cmd == "registry":
+        print(REGISTRY)
+    elif cmd == "root":
+        print(LYFF_ROOT)
+    else:
+        print(f"unknown command: {cmd}", file=sys.stderr)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

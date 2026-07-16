@@ -1,0 +1,50 @@
+# --- lyff meta-repo ---
+# Nested project checkouts keep their own .git. The hub tracks orchestration + docs.
+# Heavy / generated artifacts (never commit)
+
+**/.pixi/
+**/.venv/
+**/node_modules/
+**/target/
+**/dist/
+**/build/
+**/.next/
+**/.turbo/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/bin/
+!bin/
+!bin/lyff
+
+# Local env & secrets
+**/.env
+**/.env.*
+!**/.env.example
+**/*.db
+**/ents_academy.db
+
+# OS / editor
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# Nested git internals (children are independent repos; do not nest as submodules)
+# We still allow the directories themselves for offline workspaces when force-added selectively.
+# Default: do not track nested project source via parent (use `lyff` for orchestration).
+/43/
+/44/
+/ai/
+/bet/
+/ents/
+/maxi/
+/pi-upstream/
+/rugs/
+/tyypin/
+/witness/
+
+# Local hub state
+.lyff/cache/
+*.log

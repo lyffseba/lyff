@@ -1,0 +1,116 @@
+# lyff offline portfolio registry
+# Paths are relative to the lyff root. All orchestration is local-first.
+version: 1
+root: .
+motto: "First do it, then do it right, then do it better."
+offline: true
+
+projects:
+  - id: 43
+    name: "42 Projects Store"
+    path: 43
+    role: school
+    stack: [c]
+    status: active
+    offline_ok: true
+    commands:
+      test: "make -C libft bonus"
+      docs: "libft/Subject.pdf"
+
+  - id: 44
+    name: "Piscine World"
+    path: 44
+    role: product
+    stack: [node, three]
+    status: active
+    offline_ok: true
+    commands:
+      start: "npm run dev"
+      install: "npm run install-cli"
+
+  - id: ai
+    name: "ai coding agent (pi fork)"
+    path: ai
+    role: product
+    stack: [node, typescript]
+    status: active
+    offline_ok: partial  # needs model API for live chat; build is offline
+    remote: https://github.com/lyffseba/ai-coding-agent.git
+    commands:
+      build: "npm run build"
+      test: "npm test"
+
+  - id: bet
+    name: "bet terminal games"
+    path: bet
+    role: product
+    stack: [rust]
+    status: active
+    offline_ok: true
+    commands:
+      build: "cargo build --release"
+      run: "cargo run --release"
+
+  - id: ents
+    name: "Ents Academy"
+    path: ents
+    role: contest
+    stack: [python, mojo, jax]
+    status: active
+    offline_ok: partial  # curriculum offline; live Gemini optional (demo mode works)
+    commands:
+      smoke: "ENTS_DISABLE_SCHEDULER=1 .venv/bin/python scripts/smoke_web.py"
+      run: "uvicorn web.app:app --reload --port 8000"
+
+  - id: maxi
+    name: "maxi MAX kernels"
+    path: maxi
+    role: grant
+    stack: [mojo, max]
+    status: active
+    offline_ok: true  # after pixi install once
+    commands:
+      test: "pixi run test"
+
+  - id: pi-upstream
+    name: "pi upstream mirror"
+    path: pi-upstream
+    role: reference
+    stack: [node, typescript]
+    status: reference
+    offline_ok: true
+    remote: https://github.com/earendil-works/pi.git
+    commands: {}
+
+  - id: rugs
+    name: "Iberian Rugs hybrid store"
+    path: rugs
+    role: product
+    stack: [node, next, supabase]
+    status: active
+    offline_ok: partial  # UI offline with mock agents; Supabase optional
+    commands:
+      test: "npm test -w webshop && npm test -w packages/agents"
+      dev: "npm run dev"
+
+  - id: tyypin
+    name: "tyypin (superseded)"
+    path: tyypin
+    role: archive
+    stack: [rust]
+    status: superseded
+    offline_ok: true
+    superseded_by: ai
+    commands:
+      build: "cargo build --release"
+
+  - id: witness
+    name: "Witness model probes"
+    path: witness
+    role: product
+    stack: [go]
+    status: active
+    offline_ok: partial  # build offline; live probes need keys
+    commands:
+      build: "make build"
+      test: "make test"
