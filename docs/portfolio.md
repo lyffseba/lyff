@@ -8,19 +8,13 @@ All paths relative to `~/lyff`.
 - **Path:** `ai/`
 - **Remote:** github.com/lyffseba/ai-coding-agent
 - **Stack:** TypeScript monorepo (pi fork)
-- **Notes:** Canonical agent. Spawns **bet** for `/play`. See also **witness** philosophy.
+- **Notes:** Canonical agent. Spawns **bet** for `/play`.
 
 ### bet — terminal game hub
 - **Path:** `bet/`
 - **Remote:** github.com/lyffseba/bet
 - **Stack:** Rust + Ratatui
 - **Offline:** fully
-
-### rugs — Iberian Rugs hybrid store
-- **Path:** `rugs/`
-- **Remote:** github.com/lyffseba/rugs (private)
-- **Stack:** Next.js, Supabase, Gemma agents
-- **Offline:** mock agents + local UI
 
 ### witness — model transparency probes
 - **Path:** `witness/`
@@ -36,6 +30,13 @@ All paths relative to `~/lyff`.
 
 ## School & grants
 
+### 421 — Full 42 cursus mirror
+- **Path:** `421/`
+- **Remote:** github.com/lyffseba/421
+- **Stack:** C (Norm), PHP, Python/ML notebooks
+- **Contents:** Complete source for piscine_reloaded, libft, get_next_line, fillit, ft_printf, push_swap, lem_in, corewar, fdf, fractol, roger_skyline_1, php_piscine, workshops_machinelearning (mirrored from anaiel/-42projects + linked repos)
+- **Offline:** fully
+
 ### 43 — École 42 store
 - **Path:** `43/` — Libft (+ Subject PDFs)
 - **Remote:** github.com/lyffseba/43
@@ -50,28 +51,14 @@ All paths relative to `~/lyff`.
 - **Remote:** github.com/lyffseba/maxi (private)
 - **Role:** Community grant kernel work
 
-## Reference & archive
-
-### pi-upstream
-- **Path:** `pi-upstream/`
-- **Remote:** github.com/earendil-works/pi
-- **Role:** Read-only base for the **ai** fork — do not product-develop here
-
-### tyypin
-- **Path:** `tyypin/`
-- **Remote:** deleted (superseded)
-- **Role:** Local archive; canonical is **ai**
-
 ## Lineage
 
 ```text
-pi-upstream (reference)
-    └── ai (canonical agent)  ← tyypin (archive)
-            └── /play → bet
+ai (canonical agent)
+    └── /play → bet
 
 ents (education / contest)
 maxi (kernels / grant)
-rugs (commerce / hybrid agents)
 witness (transparency / philosophy)
-43, 44 (42 school)
+43, 421, 44 (42 school)
 ```

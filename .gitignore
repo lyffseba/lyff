@@ -35,14 +35,12 @@
 # We still allow the directories themselves for offline workspaces when force-added selectively.
 # Default: do not track nested project source via parent (use `lyff` for orchestration).
 /43/
+/421/
 /44/
 /ai/
 /bet/
 /ents/
 /maxi/
-/pi-upstream/
-/rugs/
-/tyypin/
 /witness/
 
 # Local hub state
