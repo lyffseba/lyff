@@ -9,7 +9,7 @@
   docs/         ← portfolio docs
   bin/lyff      ← center command
   registry.yaml ← project source of truth
-  43/ ai/ bet/ …← nested independent repos
+  43/ bet/ witness/ …← nested independent repos
 ```
 
 > First do it, then do it right, then do it better.
@@ -67,7 +67,6 @@ Start at **[docs/index.md](docs/index.md)**.
 |-----|---------|
 | `43` | 42 school (Libft) |
 | `44` | 3D Piscine World |
-| `ai` | Engineer agent CLI |
 | `bet` | Terminal games |
 | `ents` | Ents Academy |
 | `maxi` | Mojo/MAX kernels |

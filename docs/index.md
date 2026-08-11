@@ -54,7 +54,6 @@ lyff/
 |----|------|---------|
 | **43** | 42 curriculum (Libft) | full |
 | **44** | 3D Piscine campus | full |
-| **ai** | Engineer agent CLI | build offline; chat needs API |
 | **bet** | Terminal games | full |
 | **ents** | Ents Academy / XPRIZE | curriculum + demo web offline |
 | **maxi** | Mojo/MAX kernels | full after `pixi install` |

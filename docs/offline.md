@@ -21,7 +21,6 @@ lyff is designed so **documentation and orchestration never require the network*
 
 | Capability | Why |
 |------------|-----|
-| Live agent chat (`ai`) | Provider APIs |
 | Live ents tutor | Gemini key |
 | rugs live agents | Vertex/Gemini + Supabase |
 | witness probes | Provider APIs |
@@ -34,7 +33,6 @@ lyff is designed so **documentation and orchestration never require the network*
 cd ~/lyff
 lyff doctor
 # While online, once per machine:
-lyff run ai -- npm install --ignore-scripts   # if developing ai
 lyff run rugs -- npm install
 lyff run maxi -- pixi install
 lyff run ents -- bash -c 'python3 -m venv .venv && .venv/bin/pip install -r web/requirements.txt httpx'

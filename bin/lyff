@@ -498,7 +498,6 @@ def cmd_prep(reg: dict) -> int:
         ("43", "make -C libft bonus", "Libft builds offline"),
         ("bet", "cargo fetch && cargo build --release", "Rust deps cached"),
         ("witness", "go mod download && make build", "Go modules cached"),
-        ("ai", "npm install --ignore-scripts", "Node deps for agent"),
         ("rugs", "npm install", "Node deps for storefront"),
         ("maxi", "pixi install && pixi run test", "Mojo/MAX toolchain"),
         (

@@ -40,18 +40,6 @@ projects:
       start: "npm run dev"
       install: "npm run install-cli"
 
-  - id: ai
-    name: "ai coding agent (pi fork)"
-    path: ai
-    role: product
-    stack: [node, typescript]
-    status: active
-    offline_ok: partial  # needs model API for live chat; build is offline
-    remote: https://github.com/lyffseba/ai-coding-agent.git
-    commands:
-      build: "npm run build"
-      test: "npm test"
-
   - id: bet
     name: "bet terminal games"
     path: bet
