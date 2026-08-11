@@ -34,7 +34,7 @@ class TestRegistry(unittest.TestCase):
 
     def test_projects_present(self):
         ids = {p["id"] for p in self.reg["projects"]}
-        for need in ("43", "44", "ai", "bet", "ents", "maxi", "rugs", "witness"):
+        for need in ("43", "44", "bet", "ents", "maxi", "witness"):
             self.assertIn(need, ids)
 
     def test_ids_are_strings(self):

@@ -5,7 +5,7 @@ You are working in the **lyff offline portfolio hub** (`~/lyff`).
 ## Rules
 
 1. **Offline-first.** Prefer local commands. Do not require network for status, docs, or builds that can run offline.
-2. **Hub vs projects.** Meta docs live at the root / `docs/`. Nested dirs (`43/`, `ai/`, …) are **independent git repos** — commit inside the project that owns the change.
+2. **Hub vs projects.** Meta docs live at the root / `docs/`. Nested dirs (`43/`, `bet/`, …) are **independent git repos** — commit inside the project that owns the change.
 3. **Registry is truth.** Project ids and offline commands are in `registry.yaml`. Update it when adding/removing projects.
 4. **CLI.** Use `./bin/lyff` or `lyff` for orchestration (`status`, `doctor`, `docs`, `run`, `foreach`).
 5. **Secrets.** Never commit `.env` or API keys. Use each project's `.env.example`.

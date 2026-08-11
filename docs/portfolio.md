@@ -4,12 +4,6 @@ All paths relative to `~/lyff`.
 
 ## Active products
 
-### ai — engineer-first agent CLI
-- **Path:** `ai/`
-- **Remote:** github.com/lyffseba/ai-coding-agent
-- **Stack:** TypeScript monorepo (pi fork)
-- **Notes:** Canonical agent. Spawns **bet** for `/play`.
-
 ### bet — terminal game hub
 - **Path:** `bet/`
 - **Remote:** github.com/lyffseba/bet
@@ -54,11 +48,11 @@ All paths relative to `~/lyff`.
 ## Lineage
 
 ```text
-ai (canonical agent)
-    └── /play → bet
-
+bet (terminal games)
+witness (transparency / philosophy)
 ents (education / contest)
 maxi (kernels / grant)
-witness (transparency / philosophy)
 43, 421, 44 (42 school)
+
+removed: ai / ai-coding-agent (deleted 2026-08)
 ```
