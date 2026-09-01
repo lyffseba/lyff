@@ -62,5 +62,6 @@ lyff/
 | **rugs** | Iberian Rugs store | mock agents offline |
 | **tyypin** | Superseded Rust agent | archive |
 | **witness** | Model fingerprinting | build offline; probes need keys |
+| **sable** | Private pre-MVP | protocol/cv tests offline; camera optional |
 
 Deep links: open each project's own `README.md` after `lyff open <id>`.

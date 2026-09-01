@@ -22,6 +22,12 @@ All paths relative to `~/lyff`.
 - **Stack:** Go
 - **Offline:** build/test; live probes need keys
 
+### sable — private pre-MVP
+- **Path:** `sable/`
+- **Remote:** github.com/lyffseba/sable (private)
+- **Stack:** Godot + C++
+- **Notes:** Original IP. Codename only. Nested checkout; product work lives in that repo, not the public hub.
+
 ### 44 — Piscine World
 - **Path:** `44/`
 - **Remote:** github.com/lyffseba/44
@@ -60,5 +66,6 @@ ai (canonical agent)
 ents (education / contest)
 maxi (kernels / grant)
 witness (transparency / philosophy)
+sable (private pre-MVP)
 43, 421, 44 (42 school)
 ```

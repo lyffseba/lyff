@@ -94,3 +94,15 @@ projects:
     commands:
       build: "make build"
       test: "make test"
+
+  - id: sable
+    name: "sable"
+    path: sable
+    role: product
+    stack: [godot, cpp]
+    status: active
+    offline_ok: true  # protocol/cv tests; live camera optional
+    remote: https://github.com/lyffseba/sable.git
+    commands:
+      test: "python3 tools/check_protocol.py"
+      cv: "cmake -S native/cv_input -B native/cv_input/build && cmake --build native/cv_input/build && ./native/cv_input/build/sable_cv_tests"

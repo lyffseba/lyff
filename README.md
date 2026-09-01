@@ -75,6 +75,7 @@ Start at **[docs/index.md](docs/index.md)**.
 | `rugs` | Iberian Rugs store |
 | `tyypin` | Superseded agent (local archive) |
 | `witness` | Model probes |
+| `sable` | Private pre-MVP |
 
 Each has its own `.git` and (usually) its own GitHub remote. The hub only tracks **docs + orchestration**.
 

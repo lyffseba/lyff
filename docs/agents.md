@@ -20,7 +20,7 @@ You are working in the **lyff offline portfolio hub** (`~/lyff`).
 | `bin/lyff` | Center command |
 | `registry.yaml` | Project registry |
 | `tests/` | Offline hub tests |
-| `43, 421 … witness` | Nested product/school repos |
+| `43, 421 … witness, sable` | Nested product/school repos |
 
 ## Starting work
 
