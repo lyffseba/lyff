@@ -30,7 +30,7 @@ make validate
 make test-cli
 ```
 
-Hub CI (GitHub Actions) runs the same offline tests on PRs to `main`.
+Hub CI (GitHub Actions) runs the same offline tests on PRs to `main`. Version pins and drift against current upstream releases are in [stack.md](stack.md).
 
 ## Makefile
 

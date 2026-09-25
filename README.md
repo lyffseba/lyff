@@ -57,6 +57,7 @@ Start at **[docs/index.md](docs/index.md)**.
 |-----|--|
 | [docs/portfolio.md](docs/portfolio.md) | Project map |
 | [docs/orchestration.md](docs/orchestration.md) | CLI details |
+| [docs/stack.md](docs/stack.md) | Toolchain pins and drift |
 | [docs/philosophy.md](docs/philosophy.md) | Why this shape |
 | [AGENTS.md](AGENTS.md) | Instructions for coding agents |
 | [AGENT_STATE.md](AGENT_STATE.md) | Hub session memory |

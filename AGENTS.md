@@ -16,7 +16,7 @@ You are working in the **lyff offline portfolio hub** (`~/lyff`).
 
 | Path | What |
 |------|------|
-| `docs/` | Portfolio documentation |
+| `docs/` | Portfolio documentation (`docs/stack.md` pins the toolchain) |
 | `bin/lyff` | Center command |
 | `registry.yaml` | Project registry |
 | `AGENT_STATE.md` | Hub session memory |
