@@ -11,6 +11,7 @@
 | [offline.md](offline.md) | Airplane-mode rules and what works without network |
 | [portfolio.md](portfolio.md) | Map of every nested project |
 | [orchestration.md](orchestration.md) | `lyff` CLI and Makefile |
+| [stack.md](stack.md) | Tools this tip runs, pinned to latest stable docs, plus drift |
 | [philosophy.md](philosophy.md) | How the hub thinks about tools and agents |
 
 ## Center command
