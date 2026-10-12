@@ -1,6 +1,6 @@
 # Stack
 
-**Reviewed:** 2026-09-25
+**Reviewed:** 2026-10-12
 
 Toolchain for the lyff hub tip: what this repository actually runs, the latest stable upstream release for each tool, and where the repo has drifted from those releases.
 
@@ -12,12 +12,13 @@ A pin is the newest **final** release the upstream project ships for general use
 
 These upstream lines were current on the review date and stay off the pin table until they ship as stable:
 
-| Upcoming | Status on 2026-09-25 |
+| Upcoming | Status on 2026-10-12 |
 |----------|----------------------|
-| Python 3.15 | Prerelease. Final release planned 2026-10-01 ([PEP 790](https://peps.python.org/pep-0790/)). |
 | Git 2.56.0-rc1 | Release candidate, announced 2026-09-16. |
-| Node.js 26.10.0 | Current channel. The production pin is Active LTS. |
+| Node.js 26.11.1 | Current channel. The production pin is Active LTS. |
 | GNU Make 4.4.90 | Development snapshot on the Make git tip. |
+
+Python 3.15.0 is a stable feature release as of this review (final 2026-10-09, [PEP 790](https://peps.python.org/pep-0790/)). On 2026-09-25 it was still a prerelease, with a final then planned for 2026-10-01. It is the Python pin in the hub runtime table.
 
 Node.js is pinned to **Active LTS**. npm is pinned to the copy bundled in that Node release (`deps/npm/package.json` on the tag), which is the npm `lyff doctor` and `lyff prep` invoke.
 
@@ -36,7 +37,7 @@ These are invoked by `bin/lyff`, the Makefile, `share/`, tests, or CI.
 
 | Tool | Stable pin | Released | Official docs |
 |------|------------|----------|---------------|
-| Python | **3.14.7** | 2026-08-05 | [docs.python.org/3.14](https://docs.python.org/3.14/) · [release](https://www.python.org/downloads/release/python-3147/) · [status](https://devguide.python.org/versions/) |
+| Python | **3.15.0** | 2026-10-09 | [docs.python.org/3.15](https://docs.python.org/3.15/) · [release](https://www.python.org/downloads/release/python-3150/) · [status](https://devguide.python.org/versions/) |
 | PyYAML | **6.0.3** | 2025-09-25 | [PyYAMLDocumentation](https://pyyaml.org/wiki/PyYAMLDocumentation) · [PyPI](https://pypi.org/project/PyYAML/6.0.3/) · [changelog](https://github.com/yaml/pyyaml/blob/6.0.3/CHANGES) |
 | pip | **26.2.1** | 2026-08-04 | [pip.pypa.io](https://pip.pypa.io/en/stable/) · [news](https://pip.pypa.io/en/stable/news/) |
 | Git | **2.55.0** | 2026-06-29 | [git-scm.com/docs](https://git-scm.com/docs) · [site](https://git-scm.com/) |
@@ -44,7 +45,7 @@ These are invoked by `bin/lyff`, the Makefile, `share/`, tests, or CI.
 | Bash | **5.3 patch 15** | 5.3 on 2025-07-30; patch 15 on 2026-06-09 | [manual](https://www.gnu.org/software/bash/manual/) · [status](https://tiswww.case.edu/php/chet/bash/bashtop.html) · [bash53-015](https://ftp.gnu.org/gnu/bash/bash-5.3-patches/bash53-015) |
 | actions/checkout | **v7.0.1** | 2026-07-17 | [README](https://github.com/actions/checkout/blob/v7.0.1/README.md) · [releases](https://github.com/actions/checkout/releases) |
 | actions/setup-python | **v7.0.0** | 2026-07-20 | [README](https://github.com/actions/setup-python/blob/v7.0.0/README.md) · [releases](https://github.com/actions/setup-python/releases) |
-| GitHub-hosted Ubuntu | **24.04** via `ubuntu-latest` today | 26.04 image GA 2026-09-17 | [runner images](https://github.com/actions/runner-images#available-images) · [migration note](https://github.blog/changelog/2026-09-17-ubuntu-26-generally-available-and-latest-migration/) |
+| GitHub-hosted Ubuntu | **24.04** via `ubuntu-latest` today | 26.04 image GA 2026-09-17; `ubuntu-latest` migration 2026-10-19–2026-11-19 | [runner images](https://github.com/actions/runner-images#available-images) · [migration note](https://github.blog/changelog/2026-09-17-ubuntu-26-generally-available-and-latest-migration/) |
 
 ### Python
 
@@ -63,7 +64,7 @@ The CLI stays on the standard library except for an optional PyYAML import. Libr
 
 `typing`, `os`, `sys`, and `time` are also imported. There is no `requirements.txt` and no pinned interpreter file (no `.python-version`).
 
-3.14 is in bugfix until 2030-10 ([PEP 745](https://peps.python.org/pep-0745/)). 3.13 is also in bugfix (latest patch 3.13.15, 2026-08-05). 3.12 is security-only until 2028-10; its newest patch is 3.12.14 (2026-08-12).
+3.15.0 is a stable feature release (final 2026-10-09, [PEP 790](https://peps.python.org/pep-0790/)) and is in bugfix until 2031-10. 3.14 is in bugfix until 2030-10 ([PEP 745](https://peps.python.org/pep-0745/)); its newest patch is 3.14.8 (2026-09-30). 3.13 is security-only until 2029-10; its newest patch is 3.13.16 (2026-09-30). 3.12 is security-only until 2028-10; its newest patch is 3.12.15 (2026-09-30).
 
 ### PyYAML
 
@@ -93,7 +94,7 @@ Patch 15 is `bash53-015` on the GNU patch series. `bash --version` on a patched 
 
 `.github/workflows/ci.yml` runs on `ubuntu-latest` for `push` and `pull_request` to `main`. The job checks out the repo, sets up Python, installs PyYAML, runs unittest, then smokes `./bin/lyff`.
 
-`ubuntu-latest` is Ubuntu 24.04 on this review date. Ubuntu 26.04 is generally available, and GitHub will move the `ubuntu-latest` label to 26.04 between **2026-10-19** and **2026-11-19**. Until that window finishes, a workflow that says `ubuntu-latest` still lands on 24.04. Pinning `ubuntu-24.04` is what keeps the image stable through the migration; pinning `ubuntu-26.04` is what opts in early. This docs change leaves the workflow label as it is.
+`ubuntu-latest` is still Ubuntu 24.04 on this review date (2026-10-12). Ubuntu 26.04 has been generally available since 2026-09-17. The scheduled move of the `ubuntu-latest` label to 26.04 is imminent: it starts in about 7 days, on **2026-10-19**, and runs through **2026-11-19**. Until that window finishes, a workflow that says `ubuntu-latest` still lands on 24.04. Pinning `ubuntu-24.04` keeps the image stable through the migration; pinning `ubuntu-26.04` opts in early. This docs change leaves the workflow label as it is.
 
 ## Optional shell
 
@@ -137,16 +138,16 @@ Hub commands and CI run without zsh.
 
 ## Drift
 
-Repo record versus the pins above, on 2026-09-25. "Behind" means the committed selector tracks an older release line. "Unpinned" means the tip invokes the tool and commits no version. "Floating" means a label whose meaning upstream changes without a commit here.
+Repo record versus the pins above, on 2026-10-12. "Behind" means the committed selector tracks an older release line. "Unpinned" means the tip invokes the tool and commits no version. "Floating" means a label whose meaning upstream changes without a commit here.
 
 | Tool | Repo record | File | Versus stable pin |
 |------|-------------|------|-------------------|
-| Python | `python-version: "3.12"` | `.github/workflows/ci.yml` | **Behind.** `3.12` installs the newest 3.12 patch (3.12.14, security-only). Stable pin is 3.14.7. |
+| Python | `python-version: "3.12"` | `.github/workflows/ci.yml` | **Behind.** `3.12` installs the newest 3.12 patch (3.12.15, security-only). Stable pin is 3.15.0. |
 | PyYAML | `pip install pyyaml` | `.github/workflows/ci.yml` | **Unpinned.** Latest stable is 6.0.3. |
 | pip | `pip install` with no `pip==` | `.github/workflows/ci.yml` | **Unpinned.** Latest stable is 26.2.1. |
 | actions/checkout | `actions/checkout@v4` | `.github/workflows/ci.yml` | **Behind.** `@v4` tracks v4 (newest v4.4.0, 2026-07-16). Current major is v7.0.1. |
 | actions/setup-python | `actions/setup-python@v5` | `.github/workflows/ci.yml` | **Behind.** `@v5` tracks v5 (newest v5.6.0, 2026-04-24). Current major is v7.0.0. |
-| Ubuntu runner | `runs-on: ubuntu-latest` | `.github/workflows/ci.yml` | **Floating.** Today that label is Ubuntu 24.04. It moves to 26.04 between 2026-10-19 and 2026-11-19. |
+| Ubuntu runner | `runs-on: ubuntu-latest` | `.github/workflows/ci.yml` | **Floating.** On 2026-10-12 that label is still Ubuntu 24.04. The move to 26.04 is imminent: 2026-10-19 through 2026-11-19 (starts in about 7 days). |
 | Git, Make, Bash | no version | `bin/lyff`, `Makefile`, `share/` | **Unpinned.** Doctor and the shell use `PATH`. |
 | zsh | no version | `share/lyff.sh`, `share/completions/lyff.zsh` | **Unpinned.** |
 | Node.js, npm, Cargo, Go, pixi, `cc` | no version | `bin/lyff` doctor and prep | **Unpinned.** Presence checks only. |
@@ -157,8 +158,7 @@ The columns above quote committed selectors. A machine's `python3 --version` sit
 
 Update this file in the same change that adds or removes a tool from `bin/lyff` doctor, `lyff prep`, the Makefile, `share/`, or `.github/workflows/ci.yml`. Otherwise re-review at least once a quarter, and again when one of the dated events below lands:
 
-- Python 3.15 final (planned 2026-10-01)
-- `ubuntu-latest` migration window (2026-10-19 through 2026-11-19)
+- `ubuntu-latest` migration window (2026-10-19 through 2026-11-19), imminent as of this review
 - Git 2.56.0 final (2.56.0-rc1 exists)
 
 Checklist:

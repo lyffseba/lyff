@@ -2,10 +2,10 @@
 
 > Offline command center for documentation and orchestration of `~/lyff`.
 
-## Stack docs (2026-09-25)
+## Stack docs (2026-10-12)
 
-- `docs/stack.md` pins tools this tip invokes to latest stable official docs (reviewed 2026-09-25).
-- Drift, repo vs those pins: CI Python `3.12` vs 3.14.7; `actions/checkout@v4` vs v7.0.1; `actions/setup-python@v5` vs v7.0.0; PyYAML and pip unpinned; `ubuntu-latest` is Ubuntu 24.04 until the 2026-10-19–11-19 move to 26.04. Git, Make, Bash, zsh, Node, npm, Cargo, Go, pixi, and `cc` are presence checks with no version pin.
+- `docs/stack.md` pins tools this tip invokes to latest stable official docs (reviewed 2026-10-12).
+- Drift, repo vs those pins: CI Python `3.12` vs 3.15.0; `actions/checkout@v4` vs v7.0.1; `actions/setup-python@v5` vs v7.0.0; PyYAML and pip unpinned; `ubuntu-latest` is Ubuntu 24.04 until the imminent 2026-10-19–11-19 move to 26.04. Git, Make, Bash, zsh, Node, npm, Cargo, Go, pixi, and `cc` are presence checks with no version pin.
 
 ## Current Status (2026-08-11)
 
