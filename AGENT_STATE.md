@@ -2,10 +2,11 @@
 
 > Offline command center for documentation and orchestration of `~/lyff`.
 
-## Stack docs (2026-09-25)
+## Stack docs (2026-10-19)
 
-- `docs/stack.md` pins tools this tip invokes to latest stable official docs (reviewed 2026-09-25).
-- Drift, repo vs those pins: CI Python `3.12` vs 3.14.7; `actions/checkout@v4` vs v7.0.1; `actions/setup-python@v5` vs v7.0.0; PyYAML and pip unpinned; `ubuntu-latest` is Ubuntu 24.04 until the 2026-10-19–11-19 move to 26.04. Git, Make, Bash, zsh, Node, npm, Cargo, Go, pixi, and `cc` are presence checks with no version pin.
+- `docs/stack.md` pins tools this tip invokes to latest stable official docs (reviewed 2026-10-19).
+- Node.js Active LTS pin is 24.22.0 (npm 11.19.1) through 2026-10-28; the rule then points at 26.x. Rust stable is 1.99.1 (blog 2026-10-15). pixi is 0.82.0. Python stable pin stays 3.15.0 (3.16.0a1 is a prerelease).
+- Drift, repo vs those pins: CI Python `3.12` vs 3.15.0; `actions/checkout@v4` vs v7.0.1; `actions/setup-python@v5` vs v7.0.0; PyYAML and pip unpinned; `ubuntu-latest` is still Ubuntu 24.04 in the runner-images README while the 2026-10-19–11-19 move to 26.04 is open. Git, Make, Bash, zsh, Node, npm, Cargo, Go, pixi, and `cc` are presence checks with no version pin.
 
 ## Current Status (2026-08-11)
 
